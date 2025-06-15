@@ -19,12 +19,16 @@
 #define TAG "SHT30"
 
 /**************** I2C CONFIG ****************/
-#define I2C_MASTER_SCL_IO 0
-#define I2C_MASTER_SDA_IO 26
+#define I2C_MASTER_SCL_IO 26
+#define I2C_MASTER_SDA_IO 0
 #define I2C_MASTER_NUM I2C_NUM_0
 #define I2C_MASTER_FREQ_HZ 100000
 #define I2C_MASTER_TX_BUF_DISABLE 0
 #define I2C_MASTER_RX_BUF_DISABLE 0
+
+#define I2C_PORT I2C_NUM_0
+#define SDA_PIN 0
+#define SCL_PIN 26
 
 #define SHT30_ADDR 0x44
 
@@ -204,14 +208,46 @@ void i2c_scan_with_ack(void)
     }
 }
 
+void i2c_scan2() {
+    ESP_LOGI("I2C", "Scanning for devices on I2C bus...");
+    for (uint8_t addr = 1; addr < 127; addr++) {
+        i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+        i2c_master_start(cmd);
+        i2c_master_write_byte(cmd, (addr << 1) | I2C_MASTER_WRITE, true);
+        i2c_master_stop(cmd);
+        esp_err_t ret = i2c_master_cmd_begin(I2C_PORT, cmd, pdMS_TO_TICKS(50));
+        i2c_cmd_link_delete(cmd);
+
+        if (ret == ESP_OK) {
+            ESP_LOGI("I2C", "Found device at address 0x%02X", addr);
+        }
+    }
+    ESP_LOGI("I2C", "Scan complete.");
+}
+
+void test_qmp6988(void) {
+    uint8_t dummy = 0;  // no data to send
+    esp_err_t ret = i2c_master_write_to_device(I2C_PORT, 0x70, &dummy, 0, pdMS_TO_TICKS(50));
+    if (ret == ESP_OK) {
+        ESP_LOGI(TAG, "✅ QMP6988 is responding at 0x70");
+    } else {
+        ESP_LOGE(TAG, "❌ No response from QMP6988 (0x70): %s", esp_err_to_name(ret));
+    }
+}
+
 void app_main(void)
 {
     printf("Hello world!\n");
 
     i2c_master_init();
     vTaskDelay(pdMS_TO_TICKS(1000));
+
+    test_qmp6988();
+
+    // Run scan
+    i2c_scan2();
     // i2c_scan();
-    i2c_scan_with_ack();
+    // i2c_scan_with_ack();
 
     float temp;
     esp_err_t result = sht30_read_temp(&temp);

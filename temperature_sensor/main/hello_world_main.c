@@ -148,7 +148,7 @@ static void env_task()
 {
     printf("env_task()\n");
     float temp, hum;
-    int loops = 3;
+    int loops = 10;
     //while (loops >= 0) {
         printf("while... \n");
         sht30_get(&temp, &hum);
@@ -237,12 +237,13 @@ void test_qmp6988(void) {
 
 void app_main(void)
 {
+    vTaskDelay(pdMS_TO_TICKS(1000));
     printf("Hello world!\n");
 
     i2c_master_init();
     vTaskDelay(pdMS_TO_TICKS(1000));
 
-    test_qmp6988();
+    // test_qmp6988();
 
     // Run scan
     i2c_scan2();
@@ -250,12 +251,18 @@ void app_main(void)
     // i2c_scan_with_ack();
 
     float temp;
-    esp_err_t result = sht30_read_temp(&temp);
-    if (result == ESP_OK) {
-        ESP_LOGI(TAG, "Temperature: %.2f°C", temp);
-    } else {
-        ESP_LOGE(TAG, "Failed to read temperature");
+
+    while (1) {
+        esp_err_t result = sht30_read_temp(&temp);
+        if (result == ESP_OK) {
+            ESP_LOGI(TAG, "Temperature: %.2f°C", temp);
+        } else {
+            ESP_LOGE(TAG, "Failed to read temperature");
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(2000));  // Wait 2s before next reading
     }
+
     /*
     i2c_scan();
     // xTaskCreate(env_task, "env_task", 4096, NULL, 5, NULL);

@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include "sdkconfig.h"
+
+#include "driver/gpio.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_chip_info.h"
@@ -17,8 +20,10 @@
 #include "driver/i2c.h"
 
 #define TAG "SHT30"
+#define VIB_GPIO 26
 
 /**************** I2C CONFIG ****************/
+/*
 #define I2C_MASTER_SCL_IO 0
 #define I2C_MASTER_SDA_IO 26
 #define I2C_MASTER_NUM I2C_NUM_0
@@ -67,11 +72,13 @@ static esp_err_t i2c_read(uint8_t addr, uint8_t *data, size_t len)
 {
     return i2c_master_read_from_device(I2C_MASTER_NUM, addr, data, len, pdMS_TO_TICKS(100));
 }
+*/
 
 /**************** SHT30 (Temp+RH) ****************/
+/*
 static esp_err_t sht30_sample_raw(uint16_t *raw_t, uint16_t *raw_rh)
 {
-    /* Single‑shot high‑repeatability command */
+    // Single‑shot high‑repeatability command
     uint8_t cmd[2] = {0x2C, 0x06};
     esp_err_t err = i2c_write(SHT30_ADDR, cmd, 2);
     if (err != ESP_OK) {
@@ -120,16 +127,18 @@ static esp_err_t sht30_read_temp(float *temp_c) {
 
     return ESP_OK;
 }
+*/
 
 /**************** QMP6988 (Pressure) ****************/
 #define QMP_ADDR 0x70
-/* Register addresses */
+// Register addresses */
 #define QMP6988_CHIP_ID     0xD1
 #define QMP6988_PRESS_MSB   0xF7
 /* The full compensation routine needs calibration registers;   
  * for brevity, we perform a quick uncompensated read and return raw pressure in Pa.
  * For accurate results, port the full driver from QST.
  */
+/*
 static int32_t qmp6988_read_raw_press(void)
 {
     uint8_t buf[3];
@@ -138,8 +147,10 @@ static int32_t qmp6988_read_raw_press(void)
     }
     return -1;
 }
+*/
 
 /**************** MAIN TASK ****************/
+/*
 static void env_task()
 {
     printf("env_task()\n");
@@ -203,11 +214,26 @@ void i2c_scan_with_ack(void)
         ESP_LOGI("SCAN", "✅ Scan complete.");
     }
 }
+*/
 
 void app_main(void)
 {
     printf("Hello world!\n");
 
+    gpio_reset_pin(VIB_GPIO);
+    gpio_set_direction(VIB_GPIO, GPIO_MODE_OUTPUT);
+
+    while (1) {
+        ESP_LOGI("VIB", "Motor ON");
+        gpio_set_level(VIB_GPIO, 1);
+        vTaskDelay(pdMS_TO_TICKS(300));
+
+        ESP_LOGI("VIB", "Motor OFF");
+        gpio_set_level(VIB_GPIO, 0);
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
+    
+    /*
     i2c_master_init();
     vTaskDelay(pdMS_TO_TICKS(1000));
     // i2c_scan();
@@ -220,6 +246,8 @@ void app_main(void)
     } else {
         ESP_LOGE(TAG, "Failed to read temperature");
     }
+    */
+
     /*
     i2c_scan();
     // xTaskCreate(env_task, "env_task", 4096, NULL, 5, NULL);

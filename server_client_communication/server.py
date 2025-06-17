@@ -2,8 +2,7 @@ import socket
 import csv
 import time
 from pathlib import Path
-
-import socket
+from helpers import chunker, calculate_wakeup_time
 
 HOST = socket.gethostbyname(socket.gethostname())  # or "0.0.0.0"
 PORT = 3333
@@ -14,33 +13,6 @@ END_MARKER = "DATA_SENT"
 # CSV related
 CSV_PATH = Path("values.csv")
 COLUMNS = ["x", "y", "z"]  # Change if needed
-
-def chunker(seq, size):
-    return (seq[pos:pos + size] for pos in range(0, len(seq), size))
-
-# calculate wakeup time
-def calculate_wakeup_time():
-    print("Calculating wakeup time from CSV...")
-    if not CSV_PATH.exists():
-        print("CSV file not found.")
-        return "00:00"  # fallback
-
-    with open(CSV_PATH, newline="") as f:
-        reader = csv.reader(f)
-        header = next(reader)  # skip column names
-        first_row = next(reader, None)
-
-    if first_row:
-        try:
-            values = [float(x) for x in first_row]
-            avg = sum(values) / len(values)
-            print(f"First row: {values} → avg: {avg:.2f}")
-        except Exception as e:
-            print(f"Failed to parse row: {e}")
-    else:
-        print("CSV is empty")
-
-    return "07:00"  # hardcoded wake-up time
 
 # Create TCP socket
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

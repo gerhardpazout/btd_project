@@ -24,5 +24,8 @@ time.sleep(0.05)
 sock.sendall(END.encode('utf-8'))
 print("Data sent")
 
+response = sock.recv(1024).decode('utf-8').strip()
+print(f"Wakeup time from server: {response}")
+
 input("Press Enter to disconnect...")
 sock.close()

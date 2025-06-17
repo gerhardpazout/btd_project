@@ -11,6 +11,13 @@ PORT = 3333
 START_MARKER = "SENDING_DATA"
 END_MARKER = "DATA_SENT"
 
+# CSV related
+CSV_PATH = Path("values.csv")
+COLUMNS = ["x", "y", "z"]  # Change if needed
+
+def chunker(seq, size):
+    return (seq[pos:pos + size] for pos in range(0, len(seq), size))
+
 # Create TCP socket
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((HOST, PORT))
@@ -50,9 +57,22 @@ while True:
         msg += buffer
         buffer = ""
 
-# --- Print the received message ---
+# Print the received message
 print("Received data:")
 print(msg)
+
+# parse values
+values = [float(x) for x in msg.split(",") if x.strip()]
+rows = list(chunker(values, len(COLUMNS)))
+
+# Save to CSV
+with open(CSV_PATH, "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(COLUMNS)
+    for row in rows:
+        writer.writerow(row)
+
+print(f"Saved {len(rows)} rows to {CSV_PATH}")
 
 # Just keep the connection open
 input("Press Enter to close connection...")

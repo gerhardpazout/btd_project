@@ -5,8 +5,20 @@ from pathlib import Path
 
 CSV_PATH = Path("values.csv")
 
+# chunker
 def chunker(seq, size):
     return (seq[pos:pos + size] for pos in range(0, len(seq), size))
+
+# save data to CSV
+def save_to_csv(rows, path=CSV_PATH, columns=None):
+    print(f"[💾] Saving {len(rows)} rows to {path}")
+    with open(path, "w", newline="") as f:
+        writer = csv.writer(f)
+        if columns:
+            writer.writerow(columns)
+        for row in rows:
+            writer.writerow(row)
+
 
 # calculate wakeup time
 def calculate_wakeup_time(csv_path=CSV_PATH):

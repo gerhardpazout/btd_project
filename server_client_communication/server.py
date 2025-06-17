@@ -2,7 +2,7 @@ import socket
 import csv
 import time
 from pathlib import Path
-from helpers import chunker, calculate_wakeup_time
+from helpers import chunker, save_to_csv, calculate_wakeup_time
 
 HOST = socket.gethostbyname(socket.gethostname())  # or "0.0.0.0"
 PORT = 3333
@@ -61,12 +61,8 @@ print(msg)
 values = [float(x) for x in msg.split(",") if x.strip()]
 rows = list(chunker(values, len(COLUMNS)))
 
-# Save to CSV
-with open(CSV_PATH, "w", newline="") as f:
-    writer = csv.writer(f)
-    writer.writerow(COLUMNS)
-    for row in rows:
-        writer.writerow(row)
+# Save data to CSV
+save_to_csv(rows, path=CSV_PATH, columns=COLUMNS)
 
 print(f"Saved {len(rows)} rows to {CSV_PATH}")
 

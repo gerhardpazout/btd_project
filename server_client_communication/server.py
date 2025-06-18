@@ -12,7 +12,7 @@ END_MARKER = "DATA_SENT"
 
 # CSV related
 CSV_PATH = Path("values.csv")
-COLUMNS = ["x", "y", "z"]  # Change if needed
+COLUMNS = ["timestamp", "x", "y", "z"]  # Change if needed
 
 # Create TCP socket
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

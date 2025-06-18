@@ -1,6 +1,7 @@
 import socket
 import csv
 import time
+import random
 from pathlib import Path
 
 CSV_PATH = Path("values.csv")
@@ -9,9 +10,13 @@ CSV_PATH = Path("values.csv")
 def chunker(seq, size):
     return (seq[pos:pos + size] for pos in range(0, len(seq), size))
 
+# Simulated sample data with timestamps (ms)
+def current_millis():
+    return int(time.time() * 1000)
+
 # save data to CSV
 def save_to_csv(rows, path=CSV_PATH, columns=None):
-    print(f"[💾] Saving {len(rows)} rows to {path}")
+    print(f"Saving {len(rows)} rows to {path}")
     with open(path, "w", newline="") as f:
         writer = csv.writer(f)
         if columns:
@@ -34,7 +39,7 @@ def calculate_wakeup_time(csv_path=CSV_PATH):
 
     if first_row:
         try:
-            values = [float(x) for x in first_row]
+            values = [float(x) for x in first_row[1:]]
             avg = sum(values) / len(values)
             print(f"First row: {values} → avg: {avg:.2f}")
         except Exception as e:
@@ -43,3 +48,19 @@ def calculate_wakeup_time(csv_path=CSV_PATH):
         print("CSV is empty")
 
     return "07:00"  # hardcoded wake-up time
+
+def generate_mock_data(rows=3, delay_ms=10):
+    """
+    Generates mock data in the format:
+    [timestamp, x, y, z, timestamp, x, y, z, ...]
+    and returns a comma-separated string.
+    """
+    data = []
+    for _ in range(rows):
+        ts = current_millis()
+        ax = round(random.uniform(-1.0, 1.0), 2)
+        ay = round(random.uniform(-1.0, 1.0), 2)
+        az = round(random.uniform(-1.0, 1.0), 2)
+        data.extend([int(ts), ax, ay, az])
+        time.sleep(delay_ms / 1000.0)
+    return ",".join(map(str, data))

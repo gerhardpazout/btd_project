@@ -86,6 +86,8 @@ static void button_task(void *arg)
         else if (button_pressed == BUTTON_B_GPIO && gpio_get_level(BUTTON_B_GPIO) == 0) {
             // Button B logic
             ESP_LOGI(TAG, "Button B press");
+            set_test(get_test() + 1);
+            update_screen();
         }
 
         button_pressed = -1;     // ready for next interrupt
@@ -107,6 +109,7 @@ void app_main(void)
     // init screen
     init_screen();
     render_screen();
+    update_screen();
 
 
     // GPIO setup

@@ -28,6 +28,10 @@
 
 #define TAG "SCREEN"
 
+TFT_t dev;
+FontxFile fx[2];
+int test = 0;
+
 void list_spiffs_files() {
     DIR* dir = opendir("/spiffs");
     if (dir) {
@@ -79,16 +83,32 @@ void render_screen() {
     ESP_LOGI(TAG, "Calling init_display");
 
      // Init display
-    TFT_t dev;
+    // TFT_t dev;
     spi_master_init(&dev, CONFIG_MOSI_GPIO, CONFIG_SCLK_GPIO, CONFIG_CS_GPIO, CONFIG_DC_GPIO, CONFIG_RESET_GPIO, CONFIG_BL_GPIO);
     lcdInit(&dev, CONFIG_WIDTH, CONFIG_HEIGHT, CONFIG_OFFSETX, CONFIG_OFFSETY, CONFIG_INVERSION);
 
     // Setup font
-    FontxFile fx[2];
+    // FontxFile fx[2];
     InitFontx(fx, "/spiffs/ILGH16XB.FNT", NULL);
     lcdSetFontDirection(&dev, 1);
 
     lcdFillScreen(&dev, BLUE); // initial background color of the display
 
-    lcdDrawString(&dev, fx, 10, 10, (uint8_t *)"Hello World (Screen 3)", WHITE);
+    lcdDrawString(&dev, fx, 10, 10, (uint8_t *)"Hello World (Screen 5)", WHITE);
+}
+
+void update_screen() {
+    lcdFillScreen(&dev, BLUE);
+    
+    char buf[32];
+    snprintf(buf, sizeof(buf), "Test: %d s", test);
+    lcdDrawString(&dev, fx, 30, 10, (uint8_t *)buf, WHITE);
+}
+
+void set_test(int test_new) {
+    test = test_new;
+}
+
+int get_test() {
+    return test;
 }

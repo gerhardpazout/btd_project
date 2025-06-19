@@ -152,6 +152,8 @@ void app_main(void)
     init_mpu6886();
     ESP_LOGI(TAG, "I2C and MPU initialized!");
 
+    vTaskDelay(pdMS_TO_TICKS(100));
+    
     // init screen
     init_screen();
     render_screen();

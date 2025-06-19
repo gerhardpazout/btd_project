@@ -33,6 +33,7 @@
 
 #define HIGHLIGHT_HEIGHT 20
 #define HIGHLIGHT_WIDTH 15
+#define HIGHLIGHT_PADDING_X 2
 
 #define TAG "SCREEN"
 
@@ -85,6 +86,8 @@ void init_screen() {
     // Power on
     AXP192_PowerOn();
     AXP192_ScreenBreath(11);
+
+    vTaskDelay(pdMS_TO_TICKS(100));
 }
 
 void render_screen() {
@@ -143,7 +146,7 @@ void draw_highlight(uint8_t index) {
             break;
     }
 
-    lcdDrawFillRect(&dev, rect_x, rect_y, rect_x + HIGHLIGHT_HEIGHT, rect_y + HIGHLIGHT_WIDTH, TEXT_COLOR);
+    lcdDrawFillRect(&dev, rect_x, rect_y - HIGHLIGHT_PADDING_X, rect_x + HIGHLIGHT_HEIGHT, rect_y + HIGHLIGHT_WIDTH + HIGHLIGHT_PADDING_X, TEXT_COLOR);
     lcdDrawString(&dev, fx, text_x, text_y, (uint8_t *)buf, BG_COLOR);
 }
 

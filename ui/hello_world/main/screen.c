@@ -110,44 +110,34 @@ void render_screen() {
 
 void draw_highlight(uint8_t index) {
     char buf[32];
-    int rect_x = 0;
-    int rect_y = 0;
-    int text_x = 0;
-    int text_y = 0;
+    int x = 0;
+    int y = 0;
     
     switch (index) {
         case 1:
             snprintf(buf, sizeof(buf), "%02d", alarm_start.minute);
-            rect_x = 50;
-            rect_y = 40;
-            text_x = 50;
-            text_y = 40;
+            x = 50;
+            y = 40;
             break;
         case 2:
             snprintf(buf, sizeof(buf), "%02d", alarm_end.hour);
-            rect_x = 50;
-            rect_y = 80;
-            text_x = 50;
-            text_y = 80;
+            x = 50;
+            y = 80;
             break;
         case 3:
             snprintf(buf, sizeof(buf), "%02d", alarm_end.minute);
-            rect_x = 50;
-            rect_y = 110;
-            text_x = 50;
-            text_y = 110;
+            x = 50;
+            y = 110;
             break;
         default:
             snprintf(buf, sizeof(buf), "%02d", alarm_start.hour);
-            rect_x = 50;
-            rect_y = 10;
-            text_x = 50;
-            text_y = 10;
+            x = 50;
+            y = 10;
             break;
     }
 
-    lcdDrawFillRect(&dev, rect_x, rect_y - HIGHLIGHT_PADDING_X, rect_x + HIGHLIGHT_HEIGHT, rect_y + HIGHLIGHT_WIDTH + HIGHLIGHT_PADDING_X, TEXT_COLOR);
-    lcdDrawString(&dev, fx, text_x, text_y, (uint8_t *)buf, BG_COLOR);
+    lcdDrawFillRect(&dev, x, y - HIGHLIGHT_PADDING_X, x + HIGHLIGHT_HEIGHT, y + HIGHLIGHT_WIDTH + HIGHLIGHT_PADDING_X, TEXT_COLOR);
+    lcdDrawString(&dev, fx, x, y, (uint8_t *)buf, BG_COLOR);
 }
 
 void update_screen() {
@@ -189,15 +179,6 @@ void update_screen() {
 
     // draw highlight
     draw_highlight(alarm_index);
-
-    
-
-
-    /*
-    char buf[32];
-    snprintf(buf, sizeof(buf), "Test: %d s", test);
-    lcdDrawString(&dev, fx, 30, 10, (uint8_t *)buf, TEXT_COLOR);
-    */
 }
 
 void set_test(int test_new) {

@@ -49,18 +49,20 @@ def calculate_wakeup_time(csv_path=CSV_PATH):
 
     return "07:00"  # hardcoded wake-up time
 
-def generate_mock_data(rows=3, delay_ms=10):
+def generate_mock_data(n_samples=2, delay_ms=0):
     """
     Generates mock data in the format:
-    [timestamp, x, y, z, timestamp, x, y, z, ...]
-    and returns a comma-separated string.
+    [timestamp, x, y, z, temp, ...]
+    Returns a comma-separated string.
     """
-    data = []
-    for _ in range(rows):
-        ts = current_millis()
-        ax = round(random.uniform(-1.0, 1.0), 2)
-        ay = round(random.uniform(-1.0, 1.0), 2)
-        az = round(random.uniform(-1.0, 1.0), 2)
-        data.extend([int(ts), ax, ay, az])
+    import random, time
+    samples = []
+    for _ in range(n_samples):
+        ts = int(time.time() * 1000)
+        x = round(random.uniform(-1, 1), 2)
+        y = round(random.uniform(-1, 1), 2)
+        z = round(random.uniform(-1, 1), 2)
+        temp = round(random.uniform(20.0, 40.0), 2)
+        samples.extend([ts, x, y, z, temp])
         time.sleep(delay_ms / 1000.0)
-    return ",".join(map(str, data))
+    return ",".join(map(str, samples))

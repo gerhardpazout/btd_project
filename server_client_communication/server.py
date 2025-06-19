@@ -8,13 +8,13 @@ HOST, PORT = socket.gethostbyname(socket.gethostname()), 3333
 START_MARKER, END_MARKER = "SENDING_DATA", "DATA_SENT"
 COLUMNS = ["timestamp", "x", "y", "z", "temp"]
 
-# ------------------------------------------------------------------
-# ✨  NEW: create one folder per server run
+#####################################################################
+# create one folder per server run
 UPLOAD_ROOT   = Path("uploads")
 SESSION_DIR   = UPLOAD_ROOT / f"session_{datetime.now():%Y%m%d_%H%M}"
 SESSION_DIR.mkdir(parents=True, exist_ok=True)
 print(f"Info: Session directory: {SESSION_DIR}")
-# ------------------------------------------------------------------
+#####################################################################
 
 def handle_client(conn, addr):
     print(f"Info: {addr} connected")

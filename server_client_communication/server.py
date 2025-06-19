@@ -1,79 +1,87 @@
-import socket
-import csv
-import time
+#!/usr/bin/env python3
+import socket, csv, errno
 from pathlib import Path
-from helpers import chunker, save_to_csv, calculate_wakeup_time
+from datetime import datetime
+from helpers import chunker
 
-HOST = socket.gethostbyname(socket.gethostname())  # or "0.0.0.0"
-PORT = 3333
+HOST, PORT = socket.gethostbyname(socket.gethostname()), 3333
+START_MARKER, END_MARKER = "SENDING_DATA", "DATA_SENT"
+COLUMNS = ["timestamp", "x", "y", "z", "temp"]
 
-START_MARKER = "SENDING_DATA"
-END_MARKER = "DATA_SENT"
+#####################################################################
+# create one folder per server run
+UPLOAD_ROOT   = Path("uploads")
+SESSION_DIR   = UPLOAD_ROOT / f"session_{datetime.now():%Y%m%d_%H%M}"
+SESSION_DIR.mkdir(parents=True, exist_ok=True)
+print(f"Info: Session directory: {SESSION_DIR}")
+#####################################################################
 
-# CSV related
-CSV_PATH = Path("values.csv")
-COLUMNS = ["timestamp", "x", "y", "z"]  # Change if needed
+def handle_client(conn, addr):
+    print(f"Info: {addr} connected")
+    buffer, msg, receiving = "", "", False
 
-# Create TCP socket
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((HOST, PORT))
-server.listen(1)
+    while True:
+        chunk = conn.recv(4096)
+        if not chunk:
+            print(f"Info: {addr} disconnected early")
+            return
+        buffer += chunk.decode()
 
-print(f"Server listening on {HOST}:{PORT}")
-print("Waiting for a client to connect...")
+        if not receiving:
+            if START_MARKER in buffer:
+                receiving = True
+                buffer = buffer.split(START_MARKER, 1)[1]
+            else:
+                continue
 
-# Wait and accept a client
-conn, addr = server.accept()
-print(f"Client connected from {addr[0]}:{addr[1]}")
-
-buffer = ""
-msg = ""
-receiving = False
-
-while True:
-    data = conn.recv(1024)
-    if not data:
-        print("Client disconnected unexpectedly")
-        break
-
-    decoded = data.decode('utf-8')
-    buffer += decoded
-
-    if not receiving:
-        if START_MARKER in buffer:
-            receiving = True
-            buffer = buffer.split(START_MARKER, 1)[1]  # remove marker
+        if END_MARKER in buffer:
+            msg += buffer.split(END_MARKER, 1)[0]
+            break
         else:
-            continue
+            msg += buffer
+            buffer = ""
 
-    if END_MARKER in buffer:
-        msg += buffer.split(END_MARKER, 1)[0]
-        break
-    else:
-        msg += buffer
-        buffer = ""
+    # -------- save one CSV per upload -----------------------------
+    flat = [v for v in msg.split(",") if v.strip()]
+    rows = list(chunker(flat, 5))          # [ts,x,y,z,temp]
 
-# Print the received message
-print("Received data:")
-print(msg)
+    ts_file = datetime.now().strftime("%Y%m%d_%H%M%S")
+    csv_path = SESSION_DIR / f"batch_{ts_file}.csv"
 
-# parse values
-values = [float(x) for x in msg.split(",") if x.strip()]
-rows = list(chunker(values, len(COLUMNS)))
+    with open(csv_path, "w", newline="") as f:     # new file each upload
+        w = csv.writer(f)
+        w.writerow(COLUMNS)
+        for row in rows:
+            try:
+                ts_int   = int(row[0])
+                floats   = [float(v) for v in row[1:]]
+                w.writerow([ts_int] + floats)
+            except ValueError:
+                print(f"Error: malformed row skipped: {row}")
 
-# Save data to CSV
-save_to_csv(rows, path=CSV_PATH, columns=COLUMNS)
+    print(f"Info: {len(rows)} samples → {csv_path.name}")
+    conn.sendall(b"OK\n")
+    conn.close()
+    print(f"{addr} done")
 
-print(f"Saved {len(rows)} rows to {CSV_PATH}")
+def main():
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.bind((HOST, PORT))
+    srv.listen()
+    srv.settimeout(2.0)  # ✨ important: make accept() non-blocking
+    print(f"Listening on {HOST}:{PORT}")
 
-# Call calculation and send result
-wakeup_time = calculate_wakeup_time()
-conn.sendall(wakeup_time.encode('utf-8'))
-print(f"Sent wakeup time: {wakeup_time}")
+    try:
+        while True:
+            try:
+                conn, addr = srv.accept()
+                handle_client(conn, addr)
+            except socket.timeout:
+                continue  # no client → check for Ctrl+C again
+    except KeyboardInterrupt:
+        print("\nServer stopped by user")
+    finally:
+        srv.close()
 
-# Just keep the connection open
-input("Press Enter to close connection...")
-
-conn.close()
-server.close()
-print("Server closed.")
+if __name__ == "__main__":
+    main()

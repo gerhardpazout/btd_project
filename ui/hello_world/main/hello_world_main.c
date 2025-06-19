@@ -6,6 +6,7 @@
 #include "esp_log.h"
 #include "time_simple.h"
 #include "shared_globals.h"
+#include <stdbool.h>
 
 #include <inttypes.h>
 #include "sdkconfig.h"
@@ -47,6 +48,7 @@ static volatile bool waiting_second     = false;
 uint8_t alarm_index = 0;
 TimeSimple alarm_start   = { .hour = 0, .minute = 0 };
 TimeSimple alarm_end     = { .hour = 0, .minute = 0 };
+bool is_alarm_set = false;
 
 void increase_alarm(uint8_t index) {
     switch (index) {
@@ -87,6 +89,7 @@ static void single_press_cb(TimerHandle_t xTimer)
 {
     waiting_second = false;
     ESP_LOGI(TAG, "Button A SINGLE press");
+    increase_alarm_index();
 }
 
 /**
@@ -115,12 +118,13 @@ static void button_task(void *arg)
                 xTimerStop(single_tmr, 0);
                 waiting_second = false;
                 ESP_LOGI(TAG, "Button A DOUBLE press");
+
+                is_alarm_set = true;
+                update_screen();
             } else {
                 // first press: prepare one-shot timer
                 waiting_second = true;
                 xTimerStart(single_tmr, 0);          // 400 ms window
-
-                increase_alarm_index();
             }
         }
         else if (button_pressed == BUTTON_B_GPIO && gpio_get_level(BUTTON_B_GPIO) == 0) {
@@ -153,7 +157,7 @@ void app_main(void)
     ESP_LOGI(TAG, "I2C and MPU initialized!");
 
     vTaskDelay(pdMS_TO_TICKS(100));
-    
+
     // init screen
     init_screen();
     render_screen();

@@ -4,6 +4,7 @@
 #include "esp_log.h"
 #include "time_simple.h"
 #include "shared_globals.h"
+#include <stdbool.h>
 
 #include "sdkconfig.h"
 #include "esp_flash.h"
@@ -178,7 +179,13 @@ void update_screen() {
     lcdDrawString(&dev, fx, 50, 110, (uint8_t *)buf, TEXT_COLOR);
 
     // draw highlight
-    draw_highlight(alarm_index);
+    if(is_alarm_set) {
+        lcdDrawString(&dev, fx, 30, 10, (uint8_t *)"Connecting to server...", TEXT_COLOR);
+    }
+    else {
+        draw_highlight(alarm_index);
+    }
+    
 }
 
 void set_test(int test_new) {

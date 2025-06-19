@@ -5,6 +5,7 @@
 #include "driver/gpio.h"
 #include "esp_log.h"
 #include "time_simple.h"
+#include "shared_globals.h"
 
 #include <inttypes.h>
 #include "sdkconfig.h"
@@ -43,9 +44,9 @@ static TimerHandle_t single_tmr         = NULL;
 static volatile int  button_pressed     = -1;
 static volatile bool waiting_second     = false;
 
+uint8_t alarm_index = 0;
 TimeSimple alarm_start   = { .hour = 0, .minute = 0 };
 TimeSimple alarm_end     = { .hour = 0, .minute = 0 };
-uint8_t alarm_index = 0;
 
 void increase_alarm(uint8_t index) {
     switch (index) {
@@ -62,11 +63,21 @@ void increase_alarm(uint8_t index) {
             alarm_start.hour = (alarm_start.hour + 1) % 24;
             break;
     }
+
+    update_alarm_on_screen(alarm_start, alarm_end);
+    update_screen();
 }
 
 void increase_alarm_index() {
     alarm_index = (alarm_index + 1) % 4;
+
+    if(alarm_index == 2) {
+        alarm_end.hour = alarm_start.hour;
+        update_alarm_on_screen(alarm_start, alarm_end);
+    }
+
     ESP_LOGI(TAG, "Alarm index increased (%d)", alarm_index);
+    update_screen();
 }
 
 /**

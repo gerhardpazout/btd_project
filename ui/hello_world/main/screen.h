@@ -1,4 +1,5 @@
 #pragma once
+#include "time_simple.h"
 
 void list_spiffs_files();
 
@@ -13,3 +14,5 @@ void update_screen();
 void set_test(int test_new);
 
 int get_test();
+
+void update_alarm_on_screen(TimeSimple alarm_start_new, TimeSimple alarm_end_new);

@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <dirent.h>
 #include "esp_log.h"
+#include "time_simple.h"
+#include "shared_globals.h"
 
 #include "sdkconfig.h"
 #include "esp_flash.h"
@@ -100,9 +102,17 @@ void render_screen() {
 void update_screen() {
     lcdFillScreen(&dev, BLUE);
 
+    lcdDrawString(&dev, fx, 80, 10, (uint8_t *)"Wake me up between:", WHITE);
+
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%02d:%02d - %02d:%02d", alarm_start.hour, alarm_start.minute, alarm_end.hour, alarm_end.minute);
+    lcdDrawString(&dev, fx, 50, 10, (uint8_t *)buf, WHITE);
+
+    /*
     char buf[32];
     snprintf(buf, sizeof(buf), "Test: %d s", test);
     lcdDrawString(&dev, fx, 30, 10, (uint8_t *)buf, WHITE);
+    */
 }
 
 void set_test(int test_new) {
@@ -111,4 +121,9 @@ void set_test(int test_new) {
 
 int get_test() {
     return test;
+}
+
+void update_alarm_on_screen(TimeSimple alarm_start_new, TimeSimple alarm_end_new) {
+    alarm_start = alarm_start_new;
+    alarm_end = alarm_end_new;
 }

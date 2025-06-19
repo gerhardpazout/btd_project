@@ -28,6 +28,9 @@
 #define CONFIG_RESET_GPIO 18
 #define CONFIG_BL_GPIO 27
 
+#define BG_COLOR BLACK
+#define TEXT_COLOR WHITE
+
 #define HIGHLIGHT_HEIGHT 20
 #define HIGHLIGHT_WIDTH 15
 
@@ -97,9 +100,9 @@ void render_screen() {
     InitFontx(fx, "/spiffs/ILGH16XB.FNT", NULL);
     lcdSetFontDirection(&dev, 1);
 
-    lcdFillScreen(&dev, BLUE); // initial background color of the display
+    lcdFillScreen(&dev, BG_COLOR); // initial background color of the display
 
-    lcdDrawString(&dev, fx, 10, 10, (uint8_t *)"Hello World (Screen 5)", WHITE);
+    lcdDrawString(&dev, fx, 10, 10, (uint8_t *)"Hello World (Screen 5)", TEXT_COLOR);
 }
 
 void draw_highlight(uint8_t index) {
@@ -140,46 +143,46 @@ void draw_highlight(uint8_t index) {
             break;
     }
 
-    lcdDrawFillRect(&dev, rect_x, rect_y, rect_x + HIGHLIGHT_HEIGHT, rect_y + HIGHLIGHT_WIDTH, WHITE);
-    lcdDrawString(&dev, fx, text_x, text_y, (uint8_t *)buf, BLUE);
+    lcdDrawFillRect(&dev, rect_x, rect_y, rect_x + HIGHLIGHT_HEIGHT, rect_y + HIGHLIGHT_WIDTH, TEXT_COLOR);
+    lcdDrawString(&dev, fx, text_x, text_y, (uint8_t *)buf, BG_COLOR);
 }
 
 void update_screen() {
-    lcdFillScreen(&dev, BLUE);
+    lcdFillScreen(&dev, BG_COLOR);
 
-    lcdDrawString(&dev, fx, 80, 10, (uint8_t *)"Wake me up between:", WHITE);
+    lcdDrawString(&dev, fx, 80, 10, (uint8_t *)"Wake me up between:", TEXT_COLOR);
 
     char buf[32];
     //snprintf(buf, sizeof(buf), "%02d:%02d - %02d:%02d", alarm_start.hour, alarm_start.minute, alarm_end.hour, alarm_end.minute);
-    // lcdDrawString(&dev, fx, 50, 10, (uint8_t *)buf, WHITE);
+    // lcdDrawString(&dev, fx, 50, 10, (uint8_t *)buf, TEXT_COLOR);
 
     // XX:00 - 00:00
     snprintf(buf, sizeof(buf), "%02d", alarm_start.hour);
-    lcdDrawString(&dev, fx, 50, 10, (uint8_t *)buf, WHITE);
+    lcdDrawString(&dev, fx, 50, 10, (uint8_t *)buf, TEXT_COLOR);
 
     // :
     snprintf(buf, sizeof(buf), ":");
-    lcdDrawString(&dev, fx, 50, 30, (uint8_t *)buf, WHITE);
+    lcdDrawString(&dev, fx, 50, 30, (uint8_t *)buf, TEXT_COLOR);
 
     // 00:XX - 00:00
     snprintf(buf, sizeof(buf), "%02d", alarm_start.minute);
-    lcdDrawString(&dev, fx, 50, 40, (uint8_t *)buf, WHITE);
+    lcdDrawString(&dev, fx, 50, 40, (uint8_t *)buf, TEXT_COLOR);
 
     // -
     snprintf(buf, sizeof(buf), "-");
-    lcdDrawString(&dev, fx, 50, 65, (uint8_t *)buf, WHITE);
+    lcdDrawString(&dev, fx, 50, 65, (uint8_t *)buf, TEXT_COLOR);
 
     // 00:00 - XX:00
     snprintf(buf, sizeof(buf), "%02d", alarm_end.hour);
-    lcdDrawString(&dev, fx, 50, 80, (uint8_t *)buf, WHITE);
+    lcdDrawString(&dev, fx, 50, 80, (uint8_t *)buf, TEXT_COLOR);
 
     // :
     snprintf(buf, sizeof(buf), ":");
-    lcdDrawString(&dev, fx, 50, 100, (uint8_t *)buf, WHITE);
+    lcdDrawString(&dev, fx, 50, 100, (uint8_t *)buf, TEXT_COLOR);
 
     // 00:00 - 00:XX
     snprintf(buf, sizeof(buf), "%02d", alarm_end.minute);
-    lcdDrawString(&dev, fx, 50, 110, (uint8_t *)buf, WHITE);
+    lcdDrawString(&dev, fx, 50, 110, (uint8_t *)buf, TEXT_COLOR);
 
     // draw highlight
     draw_highlight(alarm_index);
@@ -190,7 +193,7 @@ void update_screen() {
     /*
     char buf[32];
     snprintf(buf, sizeof(buf), "Test: %d s", test);
-    lcdDrawString(&dev, fx, 30, 10, (uint8_t *)buf, WHITE);
+    lcdDrawString(&dev, fx, 30, 10, (uint8_t *)buf, TEXT_COLOR);
     */
 }
 

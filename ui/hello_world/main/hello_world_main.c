@@ -1,80 +1,64 @@
-/*
- * SPDX-FileCopyrightText: 2010-2022 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: CC0-1.0
- */
-
 #include <stdio.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
 
-#define BUTTON_A_PIN GPIO_NUM_37  
-#define BUTTON_B_PIN GPIO_NUM_39
+#define TAG "BUTTON_ISR"
 
-static const char *TAG = "UHRZEIT_EINSTELLUNG";
+// GPIOs for Buttons
+#define BUTTON_A_GPIO 37  // A = Orange front button
+#define BUTTON_B_GPIO 39  // B = Side button (if available)
 
-void app_main(void)
-{
+static TaskHandle_t button_task_handle = NULL;
+
+// Use flags to tell task which button was pressed
+volatile int button_pressed = -1;
+
+// ISR Handler
+static void IRAM_ATTR button_isr_handler(void* arg) {
+    int pin = (int) arg;
+    button_pressed = pin;
+    xTaskNotifyFromISR(button_task_handle, 0, eNoAction, NULL);
+}
+
+// Task to handle button logic
+void button_task(void* arg) {
+    while (1) {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
+        // Debounce delay
+        vTaskDelay(pdMS_TO_TICKS(50));
+
+        if (button_pressed == BUTTON_A_GPIO && gpio_get_level(BUTTON_A_GPIO) == 0) {
+            ESP_LOGI(TAG, "Button A pressed!");
+            // TODO: Do something for A
+        }
+        else if (button_pressed == BUTTON_B_GPIO && gpio_get_level(BUTTON_B_GPIO) == 0) {
+            ESP_LOGI(TAG, "Button B pressed!");
+            // TODO: Do something for B
+        }
+
+        button_pressed = -1;
+    }
+}
+
+void app_main(void) {
+    // Configure both buttons
     gpio_config_t io_conf = {
-        .pin_bit_mask = (1ULL << BUTTON_A_PIN) | (1ULL << BUTTON_B_PIN),
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_ENABLE,
         .pull_down_en = GPIO_PULLDOWN_DISABLE,
-        .intr_type = GPIO_INTR_DISABLE
+        .intr_type = GPIO_INTR_NEGEDGE,
+        .pin_bit_mask = (1ULL << BUTTON_A_GPIO) | (1ULL << BUTTON_B_GPIO)
     };
     gpio_config(&io_conf);
 
-    int hour = 0;
-    int previous_state_a = 1;
-    int previous_state_b = 1;
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(BUTTON_A_GPIO, button_isr_handler, (void*) BUTTON_A_GPIO);
+    gpio_isr_handler_add(BUTTON_B_GPIO, button_isr_handler, (void*) BUTTON_B_GPIO);
 
-    int double_click_counter = 0;
-    int tick_counter = 0;
-    const int max_ticks_for_double_click = 8; // ca. 400 ms
+    xTaskCreate(button_task, "button_task", 2048, NULL, 10, &button_task_handle);
 
-    bool waiting_for_second_click = false;
-
-    ESP_LOGI(TAG, "Bereit: B = Stunde erhöhen, A = Einfachklick (Server starten), Doppelklick (Uhrzeit anzeigen)");
-
-    while (1) {
-        int current_state_a = gpio_get_level(BUTTON_A_PIN);
-        int current_state_b = gpio_get_level(BUTTON_B_PIN);
-
-        // Button B gedrückt: Stunde erhöhen 
-        if (previous_state_b == 1 && current_state_b == 0) {
-            hour = (hour + 1) % 24;
-            ESP_LOGI(TAG, "Stunde eingestellt: %02d:00 Uhr", hour);
-        }
-
-        // Button A gedrückt 
-        if (previous_state_a == 1 && current_state_a == 0) {
-            if (waiting_for_second_click && tick_counter < max_ticks_for_double_click) {
-                // Doppelklick erkannt
-                ESP_LOGI(TAG, "Uhrzeit gespeichert: %02d:00 Uhr", hour);
-                waiting_for_second_click = false;
-                tick_counter = 0;
-            } else {
-                // Möglicher erster Klick
-                waiting_for_second_click = true;
-                tick_counter = 0;
-            }
-        }
-
-        // Warte auf zweiten Klick (Doppelklick-Timeout prüfen)
-        if (waiting_for_second_click) {
-            tick_counter++;
-            if (tick_counter > max_ticks_for_double_click) {
-                // Kein zweiter Klick → Einfachklick erkannt
-                ESP_LOGI(TAG, "Starte Server-Verbindung ...");
-                waiting_for_second_click = false;
-                tick_counter = 0;
-            }
-        }
-
-        previous_state_a = current_state_a;
-        previous_state_b = current_state_b;
-        vTaskDelay(pdMS_TO_TICKS(50));
-    }
+    ESP_LOGI(TAG, "Ready! Press Button A or B.");
 }

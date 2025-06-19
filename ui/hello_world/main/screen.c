@@ -99,7 +99,7 @@ void render_screen() {
 
 void update_screen() {
     lcdFillScreen(&dev, BLUE);
-    
+
     char buf[32];
     snprintf(buf, sizeof(buf), "Test: %d s", test);
     lcdDrawString(&dev, fx, 30, 10, (uint8_t *)buf, WHITE);

@@ -4,6 +4,7 @@
 #include "freertos/timers.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
+#include "time_simple.h"
 
 #include <inttypes.h>
 #include "sdkconfig.h"
@@ -41,6 +42,32 @@ static TaskHandle_t  button_task_handle = NULL;
 static TimerHandle_t single_tmr         = NULL;
 static volatile int  button_pressed     = -1;
 static volatile bool waiting_second     = false;
+
+TimeSimple alarm_start   = { .hour = 0, .minute = 0 };
+TimeSimple alarm_end     = { .hour = 0, .minute = 0 };
+uint8_t alarm_index = 0;
+
+void increase_alarm(uint8_t index) {
+    switch (index) {
+        case 1:
+            alarm_start.minute = (alarm_start.minute + 5) % 60;
+            break;
+        case 2:
+            alarm_end.hour = (alarm_end.hour + 1) % 24;
+            break;
+        case 3:
+            alarm_end.minute = (alarm_end.minute + 5) % 60;
+            break;
+        default:
+            alarm_start.hour = (alarm_start.hour + 1) % 24;
+            break;
+    }
+}
+
+void increase_alarm_index() {
+    alarm_index = (alarm_index + 1) % 4;
+    ESP_LOGI(TAG, "Alarm index increased (%d)", alarm_index);
+}
 
 /**
  * Called by timer for single press detection
@@ -81,12 +108,20 @@ static void button_task(void *arg)
                 // first press: prepare one-shot timer
                 waiting_second = true;
                 xTimerStart(single_tmr, 0);          // 400 ms window
+
+                increase_alarm_index();
             }
         }
         else if (button_pressed == BUTTON_B_GPIO && gpio_get_level(BUTTON_B_GPIO) == 0) {
             // Button B logic
             ESP_LOGI(TAG, "Button B press");
             set_test(get_test() + 1);
+
+            increase_alarm(alarm_index);
+
+            // log alarm timeframe
+            ESP_LOGI(TAG, "%02d:%02d - %02d:%02d", alarm_start.hour, alarm_start.minute, alarm_end.hour, alarm_end.minute);
+
             update_screen();
         }
 

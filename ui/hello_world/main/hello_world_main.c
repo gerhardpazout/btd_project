@@ -26,6 +26,7 @@
 #include "esp_spiffs.h"
 #include "esp_timer.h"
 
+#include "wifi.h"
 #include "datacapture.h"
 
 #define TAG "BUTTON_ISR"
@@ -151,6 +152,9 @@ static void button_task(void *arg)
  */
 void app_main(void)
 {
+    // connect to wifi first
+    wifi_init_sta();
+
     // Init I2C & MPU
     ESP_LOGI(TAG, "Initializing I2C and MPU...");
     ESP_ERROR_CHECK(nvs_flash_init());
@@ -201,6 +205,6 @@ void app_main(void)
     ESP_LOGI(TAG, "Print contents of buffers.csv after 5 seconds (just to check)");
     print_csv_file("/spiffs/buffer.csv");
 
-    
+
 
 }

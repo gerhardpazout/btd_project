@@ -26,6 +26,8 @@
 #include "esp_spiffs.h"
 #include "esp_timer.h"
 
+#include "datacapture.h"
+
 #define TAG "BUTTON_ISR"
 
 
@@ -190,4 +192,15 @@ void app_main(void)
     gpio_isr_handler_add(BUTTON_B_GPIO, button_isr_handler, (void*) BUTTON_B_GPIO);
 
     ESP_LOGI(TAG, "Ready! Button A: single/double | Button B: single");
+
+    ESP_LOGI(TAG, "Starting datacapture task...");
+    xTaskCreate(datacapture_task, "datacapture", 4096, NULL, 5, NULL);
+
+    // log contents of buffer.csv, just to make sure the code works!
+    vTaskDelay(pdMS_TO_TICKS(5000));
+    ESP_LOGI(TAG, "Print contents of buffers.csv after 5 seconds (just to check)");
+    print_csv_file("/spiffs/buffer.csv");
+
+    
+
 }

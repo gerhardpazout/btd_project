@@ -6,6 +6,7 @@
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "shared_globals.h"
 
 #define CSV_PATH "/spiffs/buffer.csv"
 #define SAMPLE_RATE_HZ 30
@@ -43,6 +44,12 @@ void datacapture_task(void *arg) {
 
     const int delay_ms = 1000 / SAMPLE_RATE_HZ;
     while (1) {
+        // Only start sampling if alarm is set
+        if (!is_alarm_set) {
+            vTaskDelay(pdMS_TO_TICKS(100));
+            continue;
+        }
+
         int64_t ts_ms = esp_timer_get_time() / 1000;
         float x, y, z;
         getAccelData(&x, &y, &z);

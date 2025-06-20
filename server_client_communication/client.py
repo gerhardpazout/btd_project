@@ -9,6 +9,7 @@ END   = "DATA_SENT\n"
 
 # Simulate a large buffered upload (e.g., 10 seconds @ 30Hz = 300 samples)
 DATA = generate_mock_data(n_samples=300)  # timestamp,x,y,z,temp repeated 300×
+print(generate_mock_data(3))
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect((SERVER_IP, PORT))

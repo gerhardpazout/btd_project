@@ -29,7 +29,7 @@
 #define CONFIG_RESET_GPIO 18
 #define CONFIG_BL_GPIO 27
 
-#define BG_COLOR BLACK
+#define BG_COLOR RED
 #define TEXT_COLOR WHITE
 
 #define HIGHLIGHT_HEIGHT 20

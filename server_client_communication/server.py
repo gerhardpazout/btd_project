@@ -42,19 +42,24 @@ def handle_client(conn, addr):
             buffer = ""
 
     # -------- save one CSV per upload -----------------------------
-    flat = [v for v in msg.split(",") if v.strip()]
-    rows = list(chunker(flat, 5))          # [ts,x,y,z,temp]
+    rows = []
+    for line in msg.strip().splitlines():
+        parts = [p.strip() for p in line.split(",")]
+        if len(parts) == 5:
+            rows.append(parts)
+        else:
+            print(f"Warning: Skipping malformed line: {line}")
 
     ts_file = datetime.now().strftime("%Y%m%d_%H%M%S")
     csv_path = SESSION_DIR / f"batch_{ts_file}.csv"
 
-    with open(csv_path, "w", newline="") as f:     # new file each upload
+    with open(csv_path, "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(COLUMNS)
         for row in rows:
             try:
-                ts_int   = int(row[0])
-                floats   = [float(v) for v in row[1:]]
+                ts_int  = int(row[0])
+                floats  = [float(v) for v in row[1:]]
                 w.writerow([ts_int] + floats)
             except ValueError:
                 print(f"Error: malformed row skipped: {row}")

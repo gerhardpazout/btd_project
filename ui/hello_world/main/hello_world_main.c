@@ -26,6 +26,10 @@
 #include "esp_spiffs.h"
 #include "esp_timer.h"
 
+#include "wifi.h"
+#include "datacapture.h"
+#include "datatransfer.h"
+
 #define TAG "BUTTON_ISR"
 
 
@@ -149,6 +153,9 @@ static void button_task(void *arg)
  */
 void app_main(void)
 {
+    // connect to wifi first
+    wifi_init_sta();
+
     // Init I2C & MPU
     ESP_LOGI(TAG, "Initializing I2C and MPU...");
     ESP_ERROR_CHECK(nvs_flash_init());
@@ -190,4 +197,27 @@ void app_main(void)
     gpio_isr_handler_add(BUTTON_B_GPIO, button_isr_handler, (void*) BUTTON_B_GPIO);
 
     ESP_LOGI(TAG, "Ready! Button A: single/double | Button B: single");
+
+    ESP_LOGI(TAG, "Starting datacapture task...");
+    xTaskCreate(datacapture_task, "datacapture", 4096, NULL, 5, NULL);
+
+    BaseType_t result = xTaskCreate(
+        data_transfer_task,       // Task function
+        "DataTransferTask",       // Task name (for debugging)
+        4096,                     // Stack size (in bytes)
+        NULL,                     // Task parameter (not used here)
+        tskIDLE_PRIORITY + 1,     // Priority (slightly above idle)
+        NULL                      // Task handle (not needed here)
+    );
+    if (result != pdPASS) {
+        ESP_LOGE("MAIN", "Failed to create DataTransferTask!");
+    }
+
+    // log contents of buffer.csv, just to make sure the code works!
+    vTaskDelay(pdMS_TO_TICKS(5000));
+    ESP_LOGI(TAG, "Print contents of buffers.csv after 5 seconds (just to check)");
+    print_csv_file("/spiffs/buffer.csv");
+
+
+
 }

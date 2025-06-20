@@ -51,18 +51,16 @@ def calculate_wakeup_time(csv_path=CSV_PATH):
 
 def generate_mock_data(n_samples=2, delay_ms=0):
     """
-    Generates mock data in the format:
-    [timestamp, x, y, z, temp, ...]
-    Returns a comma-separated string.
+    Generates mock CSV-style data with one sample per line.
+    Returns a newline-separated string.
     """
-    import random, time
-    samples = []
+    rows = []
     for _ in range(n_samples):
         ts = int(time.time() * 1000)
         x = round(random.uniform(-1, 1), 2)
         y = round(random.uniform(-1, 1), 2)
         z = round(random.uniform(-1, 1), 2)
         temp = round(random.uniform(20.0, 40.0), 2)
-        samples.extend([ts, x, y, z, temp])
+        rows.append(f"{ts},{x},{y},{z},{temp}")
         time.sleep(delay_ms / 1000.0)
-    return ",".join(map(str, samples))
+    return "\n".join(rows) + "\n"

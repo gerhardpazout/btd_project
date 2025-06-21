@@ -4,9 +4,11 @@
 #include "freertos/timers.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
+#include "esp_sntp.h"
 #include "time_simple.h"
 #include "shared_globals.h"
 #include <stdbool.h>
+#include <time.h>
 
 #include <inttypes.h>
 #include "sdkconfig.h"
@@ -31,6 +33,7 @@
 #include "datatransfer.h"
 
 #define TAG "BUTTON_ISR"
+#define TIMEZONE "CET-1CEST,M3.5.0/2,M10.5.0/3"
 
 
 
@@ -53,6 +56,29 @@ uint8_t alarm_index = 0;
 TimeSimple alarm_start   = { .hour = 0, .minute = 0 };
 TimeSimple alarm_end     = { .hour = 0, .minute = 0 };
 bool is_alarm_set = false;
+
+void initialize_sntp(void)
+{
+    ESP_LOGI("SNTP", "Initializing SNTP...");
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, "pool.ntp.org");
+    sntp_init();
+}
+
+void wait_for_time_sync(void)
+{
+    time_t now = 0;
+    struct tm timeinfo = { 0 };
+    int retries = 0;
+    const int retry_count = 10;
+
+    while (timeinfo.tm_year < (2020 - 1900) && ++retries < retry_count) {
+        ESP_LOGI("SNTP", "Waiting for system time to be set... (%d)", retries);
+        vTaskDelay(pdMS_TO_TICKS(2000));
+        time(&now);
+        localtime_r(&now, &timeinfo);
+    }
+}
 
 void increase_alarm(uint8_t index) {
     switch (index) {
@@ -155,6 +181,12 @@ void app_main(void)
 {
     // connect to wifi first
     wifi_init_sta();
+
+    // set time
+    setenv("TZ", TIMEZONE, 1);
+    tzset();
+    initialize_sntp();
+    wait_for_time_sync();
 
     // Init I2C & MPU
     ESP_LOGI(TAG, "Initializing I2C and MPU...");

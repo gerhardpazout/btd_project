@@ -12,7 +12,7 @@
 #include "shared_globals.h"
 
 #define BUFFER_FILE_PATH            "/spiffs/buffer.csv"
-#define BUFFER_SEND_THRESHOLD       (1 * 1024)   // 2 KB → quick testing
+#define BUFFER_SEND_THRESHOLD       (10 * 1024)   // minimum size of batch before sending
 #define TRANSFER_CHECK_INTERVAL_MS  10000        // every 10 s
 
 #define SERVER_IP   "192.168.1.100"

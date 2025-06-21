@@ -9,11 +9,13 @@
 #include <string.h>
 #include <inttypes.h>
 #include <math.h>
+#include <time.h>
 #include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/i2c.h"
 #include "shared_globals.h"
+#include <sys/time.h>
 
 
 
@@ -36,6 +38,25 @@
 #define SCL_PIN 26
 
 #define SHT30_ADDR 0x44
+
+int64_t now_ms(void)
+{
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (int64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
+
+void log_timestamp_readable(int64_t ts_ms)
+{
+    time_t seconds = ts_ms / 1000;
+    struct tm timeinfo;
+    localtime_r(&seconds, &timeinfo);
+
+    char time_str[16];
+    strftime(time_str, sizeof(time_str), "%H:%M:%S", &timeinfo);
+
+    ESP_LOGI(TAG, "Timestamp: %lld ms (%s)", ts_ms, time_str);
+}
 
 static void i2c_master_init(void) {
     i2c_config_t conf = {
@@ -207,7 +228,9 @@ void datacapture_task(void *arg) {
             continue;
         }
 
-        int64_t ts_ms = esp_timer_get_time() / 1000;
+        int64_t ts_ms = now_ms();
+        log_timestamp_readable(ts_ms);
+
         float x, y, z;
         getAccelData(&x, &y, &z);
 

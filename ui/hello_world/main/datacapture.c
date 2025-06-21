@@ -26,16 +26,20 @@
 
 // constants for temperature sensor:
 /**************** I2C CONFIG ****************/
-#define I2C_MASTER_SCL_IO 26
-#define I2C_MASTER_SDA_IO 0
+//#define I2C_MASTER_SCL_IO 26
+// #define I2C_MASTER_SDA_IO 0
 #define I2C_MASTER_NUM I2C_NUM_0
 #define I2C_MASTER_FREQ_HZ 100000
 #define I2C_MASTER_TX_BUF_DISABLE 0
 #define I2C_MASTER_RX_BUF_DISABLE 0
 
-#define I2C_PORT I2C_NUM_0
+#define I2C_PORT I2C_NUM_1
 #define SDA_PIN 0
 #define SCL_PIN 26
+
+#define SHT30_SCL_IO 26
+#define SHT30_SDA_IO 0
+#define SHT30_PORT   I2C_NUM_1 
 
 #define SHT30_ADDR 0x44
 
@@ -60,9 +64,9 @@ void log_timestamp_readable(int64_t ts_ms)
 
 static void i2c_master_init(void) {
     i2c_config_t conf = {
-        .mode = I2C_MODE_MASTER,
-        .sda_io_num = I2C_MASTER_SDA_IO,
-        .scl_io_num = I2C_MASTER_SCL_IO,
+        .mode = SHT30_PORT,
+        .sda_io_num = SHT30_SDA_IO,
+        .scl_io_num = SHT30_SCL_IO,
         .sda_pullup_en = GPIO_PULLUP_ENABLE,
         .scl_pullup_en = GPIO_PULLUP_ENABLE,
         .master.clk_speed = I2C_MASTER_FREQ_HZ,
@@ -70,14 +74,14 @@ static void i2c_master_init(void) {
 
     esp_err_t err;
 
-    err = i2c_param_config(I2C_MASTER_NUM, &conf);
+    err = i2c_param_config(SHT30_PORT, &conf);
     if (err == ESP_OK) {
         ESP_LOGI("I2C_INIT", "i2c_param_config: OK");
     } else {
         ESP_LOGE("I2C_INIT", "i2c_param_config FAILED: %s", esp_err_to_name(err));
     }
 
-    err = i2c_driver_install(I2C_MASTER_NUM,
+    err = i2c_driver_install(SHT30_PORT,
                              conf.mode,
                              I2C_MASTER_RX_BUF_DISABLE,
                              I2C_MASTER_TX_BUF_DISABLE,
@@ -91,11 +95,11 @@ static void i2c_master_init(void) {
 
 static esp_err_t i2c_write(uint8_t addr, const uint8_t *data, size_t len)
 {
-    return i2c_master_write_to_device(I2C_MASTER_NUM, addr, data, len, pdMS_TO_TICKS(100));
+    return i2c_master_write_to_device(SHT30_PORT, addr, data, len, pdMS_TO_TICKS(100));
 }
 static esp_err_t i2c_read(uint8_t addr, uint8_t *data, size_t len)
 {
-    return i2c_master_read_from_device(I2C_MASTER_NUM, addr, data, len, pdMS_TO_TICKS(100));
+    return i2c_master_read_from_device(SHT30_PORT, addr, data, len, pdMS_TO_TICKS(100));
 }
 
 /**************** SHT30 (Temp+RH) ****************/
@@ -131,7 +135,7 @@ static esp_err_t sht30_read_temp(float *temp_c) {
     uint8_t data[6];
     esp_err_t err;
 
-    err = i2c_master_write_to_device(I2C_MASTER_NUM, SHT30_ADDR, cmd, 2, pdMS_TO_TICKS(100));
+    err = i2c_master_write_to_device(SHT30_PORT, SHT30_ADDR, cmd, 2, pdMS_TO_TICKS(100));
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Write failed: %s", esp_err_to_name(err));
         return err;
@@ -139,7 +143,7 @@ static esp_err_t sht30_read_temp(float *temp_c) {
 
     vTaskDelay(pdMS_TO_TICKS(20)); // Measurement delay
 
-    err = i2c_master_read_from_device(I2C_MASTER_NUM, SHT30_ADDR, data, 6, pdMS_TO_TICKS(100));
+    err = i2c_master_read_from_device(SHT30_PORT, SHT30_ADDR, data, 6, pdMS_TO_TICKS(100));
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Read failed: %s", esp_err_to_name(err));
         return err;
@@ -229,7 +233,7 @@ void datacapture_task(void *arg) {
         }
 
         int64_t ts_ms = now_ms();
-        log_timestamp_readable(ts_ms);
+        // log_timestamp_readable(ts_ms);
 
         float x, y, z;
         getAccelData(&x, &y, &z);
@@ -240,7 +244,7 @@ void datacapture_task(void *arg) {
         fprintf(f, "%lld,%.2f,%.2f,%.2f,%.2f\n", ts_ms, x, y, z, temp);
         fflush(f);
 
-        // ESP_LOGI(TAG, "writing data into CSV: %.2f,%.2f,%.2f,%.2f", x, y, z, temp);
+        ESP_LOGI(TAG, "writing data into CSV: %.2f,%.2f,%.2f,%.2f", x, y, z, temp);
 
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }

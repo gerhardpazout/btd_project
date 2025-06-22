@@ -1,0 +1,35 @@
+# Build output
+/build/
+/*.elf
+/*.bin
+/*.map
+/*.hex
+/*.log
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# ESP-IDF specific
+sdkconfig
+sdkconfig.old
+project_description.json
+
+# VS Code settings (optional, personal prefs)
+.vscode/
+
+# Python virtualenvs
+venv/
+.env/
+.venv/
+
+# Misc
+*.pyc
+__pycache__/
+.DS_Store
+
+# IDF environment settings
+export.sh
+export.bat

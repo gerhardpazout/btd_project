@@ -3,6 +3,7 @@ import csv
 import time
 import random
 from pathlib import Path
+from datetime import datetime
 
 CSV_PATH = Path("values.csv")
 
@@ -93,3 +94,8 @@ def send_data_to_server(server_ip, port, marker_start="SENDING_DATA\n", marker_e
         sock.close()
         time.sleep(1)
         print("Connection closed.")
+
+def ts_to_hhmmss(timestamp_ms):
+    """Convert a Unix timestamp in milliseconds to HH:MM format (24h clock)."""
+    dt = datetime.fromtimestamp(timestamp_ms / 1000)
+    return dt.strftime("%H:%M:%S")

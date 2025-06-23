@@ -64,3 +64,32 @@ def generate_mock_data(n_samples=2, delay_ms=0):
         rows.append(f"{ts},{x},{y},{z},{temp}")
         time.sleep(delay_ms / 1000.0)
     return "\n".join(rows) + "\n"
+
+def generate_wakeup_window():
+    wakeup_window = [0, 0]
+    now_ms = int(time.time() * 1000)
+    wake_start = now_ms + 10_000 # 10s from now
+    wake_end   = now_ms + 60_000 # 30s from now
+    wakeup_window[0] = wake_start
+    wakeup_window[1] = wake_end
+    return wakeup_window
+
+def send_data_to_server(server_ip, port, marker_start="SENDING_DATA\n", marker_end="DATA_SENT\n", times=1):
+    for i in range (times):
+        DATA = generate_mock_data(n_samples=300)
+
+        # Upload file contents with start/end markers
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((server_ip, port))
+        sock.sendall(marker_start.encode('utf-8'))
+        sock.sendall(DATA.encode('utf-8'))
+        sock.sendall(marker_end.encode('utf-8'))
+        print("Data sent.")
+
+        # Wait for ACK from server (optional)
+        response = sock.recv(1024).decode('utf-8').strip()
+        print(f"Server response: {response}")
+
+        sock.close()
+        time.sleep(1)
+        print("Connection closed.")

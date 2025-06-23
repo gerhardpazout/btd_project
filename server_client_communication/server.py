@@ -6,6 +6,7 @@ from helpers import chunker
 
 HOST, PORT = socket.gethostbyname(socket.gethostname()), 3333
 START_MARKER, END_MARKER = "SENDING_DATA", "DATA_SENT"
+WAKE_UP_WINDOW_MARKER = "WAKE_WINDOW"
 COLUMNS = ["timestamp", "x", "y", "z", "temp"]
 
 #####################################################################
@@ -27,6 +28,21 @@ def handle_client(conn, addr):
             return
         buffer += chunk.decode()
 
+        # Check for wake up window using WAKE_WINDOW marker
+        if buffer.startswith(WAKE_UP_WINDOW_MARKER):
+            try:
+                _, start_s, end_s = buffer.strip().split(",", 2)
+                start_ms = int(start_s)
+                end_ms = int(end_s)
+                print(f"Info: WAKE_WINDOW received: {start_ms} - {end_ms}")
+                conn.sendall(b"ACK_WINDOW\n")
+            except Exception as e:
+                print(f"Error: Malformed WAKE_WINDOW from {addr}: {e}")
+                conn.sendall(b"BAD_WINDOW\n")
+            conn.close()
+            return  # Done with this control message
+
+        # From here on: check for received data
         if not receiving:
             if START_MARKER in buffer:
                 receiving = True

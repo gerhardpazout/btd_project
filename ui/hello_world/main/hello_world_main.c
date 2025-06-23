@@ -31,6 +31,7 @@
 #include "wifi.h"
 #include "datacapture.h"
 #include "datatransfer.h"
+#include "utility.h"
 
 #define TAG "BUTTON_ISR"
 #define TIMEZONE "CET-1CEST,M3.5.0/2,M10.5.0/3"
@@ -150,6 +151,11 @@ static void button_task(void *arg)
                 ESP_LOGI(TAG, "Button A DOUBLE press");
 
                 is_alarm_set = true;
+
+                int64_t alarm_start_ts = time_simple_to_timestamp(alarm_start);
+                int64_t alarm_end_ts = time_simple_to_timestamp(alarm_end);
+                ESP_LOGI(TAG, "Wakeup window set to: %s - %s", ts_to_hhmmss(alarm_start_ts), ts_to_hhmmss(alarm_end_ts));
+
                 update_screen();
             } else {
                 // first press: prepare one-shot timer

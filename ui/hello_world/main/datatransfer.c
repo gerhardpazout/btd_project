@@ -19,6 +19,7 @@
 #define SERVER_PORT 3333
 #define START_MARKER "SENDING_DATA\n"
 #define END_MARKER   "DATA_SENT\n"
+#define WAKE_UP_WINDOW_MARKER "WAKE_WINDOW"
 
 static const char *TAG = "DataTransfer";
 
@@ -47,12 +48,87 @@ static bool send_file_lines(int sock)
     return true;
 }
 
+
+
+void send_wakeup_timewindow() {
+    ESP_LOGI(TAG, "send_wakeup_timewindow() called");
+
+    bool wakeuptime_sent = false;
+
+    char msg[64];
+    snprintf(msg, sizeof(msg), "%s,%lld,%lld", WAKE_UP_WINDOW_MARKER, 1750575700907, 1750575721097);
+
+    while (!wakeuptime_sent) {
+        if(is_alarm_set) {
+            // prepare connection & connect
+            if (!wifi_is_connected()) {
+                vTaskDelay(pdMS_TO_TICKS(500));
+                ESP_LOGI(TAG, "Wifi connection is set!");
+                continue;
+            }
+
+            ESP_LOGI(TAG, "Trying to connect to socket to send wakeup time...");
+
+            /* ───── create socket and connect ───── */
+            int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+            if (sock < 0) {
+                ESP_LOGE(TAG, "socket() failed");
+                vTaskDelay(pdMS_TO_TICKS(5000));
+                continue;
+            }
+
+            struct sockaddr_in dest = {
+                .sin_family = AF_INET,
+                .sin_port   = htons(SERVER_PORT),
+                .sin_addr.s_addr = inet_addr(SERVER_IP)
+            };
+
+            if (connect(sock, (struct sockaddr *)&dest, sizeof(dest)) != 0) {
+                ESP_LOGE(TAG, "connect() failed (errno %d)", errno);
+                close(sock);
+                vTaskDelay(pdMS_TO_TICKS(5000));
+                continue;
+            }
+
+            ESP_LOGI(TAG, "connected to socket – sending wakeuptime");
+
+            bool ok = true;
+            /* send start marker */
+            ok = send(sock, msg, strlen(msg), 0) >= 0;
+            /* send file line-by-line */
+
+            shutdown(sock, 0);
+            close(sock);
+
+            /* server ack (optional) ignored here */
+
+            if (ok) {
+                ESP_LOGI(TAG, "wakeup window sent!");
+                wakeuptime_sent = true;
+                
+            } else {
+                ESP_LOGW(TAG, "sending wakeup window failed!");
+            }
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+        else {
+            ESP_LOGI(TAG, "Waiting for user to set wakeup window");
+            vTaskDelay(pdMS_TO_TICKS(1000));
+        }
+    }
+}
+
 void data_transfer_task(void *pv)
 {
+    
     bool last_send_failed = false;
 
     ESP_LOGI(TAG, "transfer task running…");
 
+    // send wakeup window first
+    send_wakeup_timewindow();
+
+    // send data "endlessly"
     while (1) {
         /* wait until user has set the alarm */
         if (!is_alarm_set) {

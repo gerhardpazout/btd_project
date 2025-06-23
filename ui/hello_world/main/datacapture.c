@@ -244,7 +244,7 @@ void datacapture_task(void *arg) {
         fprintf(f, "%lld,%.2f,%.2f,%.2f,%.2f\n", ts_ms, x, y, z, temp);
         fflush(f);
 
-        ESP_LOGI(TAG, "writing data into CSV: %.2f,%.2f,%.2f,%.2f", x, y, z, temp);
+        // ESP_LOGI(TAG, "writing data into CSV: %.2f,%.2f,%.2f,%.2f", x, y, z, temp);
 
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }

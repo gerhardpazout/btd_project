@@ -16,6 +16,7 @@
 #include "driver/i2c.h"
 #include "shared_globals.h"
 #include <sys/time.h>
+#include "utility.h"
 
 
 
@@ -42,13 +43,6 @@
 #define SHT30_PORT   I2C_NUM_1 
 
 #define SHT30_ADDR 0x44
-
-int64_t now_ms(void)
-{
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return (int64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
-}
 
 void log_timestamp_readable(int64_t ts_ms)
 {
@@ -244,7 +238,7 @@ void datacapture_task(void *arg) {
         fprintf(f, "%lld,%.2f,%.2f,%.2f,%.2f\n", ts_ms, x, y, z, temp);
         fflush(f);
 
-        ESP_LOGI(TAG, "writing data into CSV: %.2f,%.2f,%.2f,%.2f", x, y, z, temp);
+        // ESP_LOGI(TAG, "writing data into CSV: %.2f,%.2f,%.2f,%.2f", x, y, z, temp);
 
         vTaskDelay(pdMS_TO_TICKS(delay_ms));
     }

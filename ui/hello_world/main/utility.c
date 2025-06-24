@@ -1,30 +1,33 @@
 #include "utility.h"
 #include <string.h>
 #include <time.h>
+#include <sys/time.h>
 
 server_action_t parse_server_response(const char *json, int64_t *ts_out) {
     if (!json || !ts_out) return ACTION_UNKNOWN;
 
-    const char *action_key = "\"action\":\"";
-    const char *ts_key = "\"timestamp\":";
+    *ts_out = 0;
 
-    const char *action_pos = strstr(json, action_key);
-    const char *ts_pos = strstr(json, ts_key);
-
-    if (ts_pos) {
-        *ts_out = strtoll(ts_pos + strlen(ts_key), NULL, 10);
-    }
-
-    if (action_pos) {
-        action_pos += strlen(action_key);
-        if (strncmp(action_pos, "TRIGGER_ALARM", 13) == 0) {
-            return ACTION_TRIGGER_ALARM;
-        } else {
-            return ACTION_UNKNOWN;
+    if (strstr(json, "\"action\": \"TRIGGER_ALARM\"")) {
+        const char *ts_key = "\"timestamp\": ";
+        const char *ts_pos = strstr(json, ts_key);
+        if (ts_pos) {
+            *ts_out = strtoll(ts_pos + strlen(ts_key), NULL, 10);
         }
+        return ACTION_TRIGGER_ALARM;
     }
 
-    return ACTION_NONE;
+    if (strstr(json, "\"action\": \"NONE\"")) {
+        return ACTION_NONE;
+    }
+
+    return ACTION_UNKNOWN;
+}
+
+int64_t now_ms(void) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (int64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
 
 void ts_to_hhmmss_str(int64_t ts_ms, char *out, size_t len) {

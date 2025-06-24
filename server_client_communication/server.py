@@ -116,10 +116,11 @@ def handle_client(conn, addr):
         response = {
             "status": "OK",
             "action": "TRIGGER_ALARM",
-            "timestamp": alarm_timestamp
+            "threshold_low": round(low, 8),
+            "threshold_high": round(high, 8)
         }
         wake_window["alarm_sent"] = True
-        print(f"Info: Triggering alarm at {ts_to_hhmmss(alarm_timestamp)} ({response['timestamp']})")
+        print(f"Info: Triggering alarm for threshold between {low:.8f} and {high:.8f}")
     else:
         # print(f"Wakeup window NOT reached yet! Window: {ts_to_hhmmss(wake_window['start'])} - {ts_to_hhmmss(wake_window['end'])}, Now: {ts_to_hhmmss(now_ms)}")
         response = { 

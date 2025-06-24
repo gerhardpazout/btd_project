@@ -108,10 +108,12 @@ void send_wakeup_timewindow() {
 
             bool ok = send(sock, msg, strlen(msg), 0) >= 0;
 
+            
             if (ok) {
                 char recv_buf[256] = {0};
                 int len = recv(sock, recv_buf, sizeof(recv_buf) - 1, 0);
                 if (len > 0) {
+                    /*
                     recv_buf[len] = '\0';
                     int64_t ts = 0;
                     server_action_t action = parse_server_response(recv_buf, &ts);
@@ -129,6 +131,7 @@ void send_wakeup_timewindow() {
                             ESP_LOGW("SERVER", "Unknown action or malformed response: %s", recv_buf);
                             break;
                     }
+                    */
 
                     wakeuptime_sent = true;
                 } else {
@@ -137,6 +140,7 @@ void send_wakeup_timewindow() {
             } else {
                 ESP_LOGW(TAG, "Sending wakeup window failed!");
             }
+            
 
             ////////////////////////
             /*
@@ -264,18 +268,27 @@ void data_transfer_task(void *pv)
             int len = recv(sock, recv_buf, sizeof(recv_buf) - 1, 0);
             if (len > 0) {
                 recv_buf[len] = '\0';
+
+                /*
                 int64_t ts = 0;
                 server_action_t action = parse_server_response(recv_buf, &ts);
+                */
+
+                double low_thresh = 0;
+                double high_thresh = 0;
+                server_action_t action = parse_server_response(recv_buf, &low_thresh, &high_thresh);
 
                 ESP_LOGI("SERVER", "response from Server: %s", recv_buf);
 
                 switch (action) {
                     case ACTION_TRIGGER_ALARM:
+                        /*
                         char alarm_time_str[16];
                         ts_to_hhmmss_str(ts, alarm_time_str, sizeof(alarm_time_str));
                         ESP_LOGI("SERVER", "Triggering alarm at timestamp: %lld (%s)", ts, alarm_time_str);
-                        
-                        startAlarmAt(ts);
+                        */
+                        ESP_LOGI("SERVER", "Received thresholds: low=%.8f, high=%.8f", low_thresh, high_thresh);
+                        // startAlarmAt(ts);
                         break;
                     case ACTION_NONE:
                         ESP_LOGI("SERVER", "No action in server response: %s", recv_buf);

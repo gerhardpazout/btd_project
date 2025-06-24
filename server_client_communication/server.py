@@ -3,6 +3,7 @@ import socket, csv, errno
 from pathlib import Path
 from datetime import datetime
 from helpers import chunker, ts_to_hhmmss
+from helpers_threshold import merge_csvs_from_directory, calculate_thresholds
 import time
 import json
 
@@ -18,6 +19,13 @@ SESSION_DIR   = UPLOAD_ROOT / f"session_{datetime.now():%Y%m%d_%H%M}"
 SESSION_DIR.mkdir(parents=True, exist_ok=True)
 print(f"Info: Session directory: {SESSION_DIR}")
 #####################################################################
+
+"""
+# TEST: show movement threshold values for specific session from the past
+df = merge_csvs_from_directory("uploads/session_20250621_2318")
+low, high = calculate_thresholds(df)
+print(f"low: {low:.8f}, high: {high:.8f}")
+"""
 
 # wake window (ms)
 wake_window = {
@@ -99,6 +107,11 @@ def handle_client(conn, addr):
         print(f"INFO: Wakeup window entered! Window: {ts_to_hhmmss(wake_window['start'])} - {ts_to_hhmmss(wake_window['end'])}, Now: {ts_to_hhmmss(now_ms)}")
 
         alarm_timestamp = now_ms + 5000  # 5s from now for demo
+
+        
+        # df = merge_csvs_from_directory(SESSION_DIR)
+        df = merge_csvs_from_directory("uploads/session_20250621_2318")
+        low, high = calculate_thresholds(df)
 
         response = {
             "status": "OK",

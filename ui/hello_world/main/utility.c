@@ -3,17 +3,25 @@
 #include <time.h>
 #include <sys/time.h>
 
-server_action_t parse_server_response(const char *json, int64_t *ts_out) {
-    if (!json || !ts_out) return ACTION_UNKNOWN;
+server_action_t parse_server_response(const char *json, double *low_out, double *high_out) {
+    if (!json || !low_out || !high_out) return ACTION_UNKNOWN;
 
-    *ts_out = 0;
+    *low_out = 0;
+    *high_out = 0;
 
     if (strstr(json, "\"action\": \"TRIGGER_ALARM\"")) {
-        const char *ts_key = "\"timestamp\": ";
-        const char *ts_pos = strstr(json, ts_key);
-        if (ts_pos) {
-            *ts_out = strtoll(ts_pos + strlen(ts_key), NULL, 10);
+        const char *low_key = "\"threshold_low\": ";
+        const char *low_pos = strstr(json, low_key);
+        if (low_pos) {
+            *low_out = strtod(low_pos + strlen(low_key), NULL);
         }
+
+        const char *high_key = "\"threshold_high\": ";
+        const char *high_pos = strstr(json, high_key);
+        if (high_pos) {
+            *high_out = strtod(high_pos + strlen(high_key), NULL);
+        }
+
         return ACTION_TRIGGER_ALARM;
     }
 

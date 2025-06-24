@@ -11,7 +11,7 @@ typedef enum {
     ACTION_UNKNOWN
 } server_action_t;
 
-server_action_t parse_server_response(const char *json, int64_t *ts_out);
+server_action_t parse_server_response(const char *json, double *low_out, double *high_out);
 
 int64_t now_ms(void);
 

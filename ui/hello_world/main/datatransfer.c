@@ -11,6 +11,7 @@
 #include "esp_log.h"
 #include "shared_globals.h"
 #include "utility.h"
+#include "alarm.h"
 
 #define BUFFER_FILE_PATH            "/spiffs/buffer.csv"
 #define BUFFER_SEND_THRESHOLD       (1 * 1024)   // minimum size of batch before sending
@@ -273,6 +274,8 @@ void data_transfer_task(void *pv)
                         char alarm_time_str[16];
                         ts_to_hhmmss_str(ts, alarm_time_str, sizeof(alarm_time_str));
                         ESP_LOGI("SERVER", "Triggering alarm at timestamp: %lld (%s)", ts, alarm_time_str);
+
+                        beep(2000);
                         // startAlarmAt(ts);
                         break;
                     case ACTION_NONE:

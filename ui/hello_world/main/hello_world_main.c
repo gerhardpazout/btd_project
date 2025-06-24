@@ -32,6 +32,7 @@
 #include "datacapture.h"
 #include "datatransfer.h"
 #include "utility.h"
+#include "alarm.h"
 
 #define TAG "BUTTON_ISR"
 #define TIMEZONE "CET-1CEST,M3.5.0/2,M10.5.0/3"
@@ -196,6 +197,9 @@ void app_main(void)
 {
     // connect to wifi first
     wifi_init_sta();
+
+    // init buzzer
+    alarm_init();
 
     // set time
     setenv("TZ", TIMEZONE, 1);

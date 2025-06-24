@@ -18,3 +18,7 @@ void beep(int duration_ms);
 static void alarm_task(void *arg);
 
 void startAlarmAt(int64_t ts);
+
+static float compute_variance(float *data, int len);
+
+void startAlarmWhenMovementInRange(double threshold_low, double threshold_high);

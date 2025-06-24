@@ -184,8 +184,10 @@ void data_transfer_task(void *pv)
     // send wakeup window first
     send_wakeup_timewindow();
 
+    bool movement_thresholds_set = false;
+
     // send data "endlessly"
-    while (1) {
+    while (!movement_thresholds_set) {
         /* wait until user has set the alarm */
         if (!is_alarm_set) {
             vTaskDelay(pdMS_TO_TICKS(1000));
@@ -288,6 +290,8 @@ void data_transfer_task(void *pv)
                         ESP_LOGI("SERVER", "Triggering alarm at timestamp: %lld (%s)", ts, alarm_time_str);
                         */
                         ESP_LOGI("SERVER", "Received thresholds: low=%.8f, high=%.8f", low_thresh, high_thresh);
+                        movement_thresholds_set = true;
+                        startAlarmWhenMovementInRange(low_thresh, high_thresh);
                         // startAlarmAt(ts);
                         break;
                     case ACTION_NONE:

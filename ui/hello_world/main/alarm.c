@@ -1,12 +1,26 @@
 #include "alarm.h"
 #include "driver/ledc.h"
 #include "esp_log.h"
+#include "driver/i2c.h"
+#include "imu.h"
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "utility.h"
 
+
 #define BUZZER_PIN 2  // adjust this to match your ESP hardware
 #define TAG "ALARM"
+
+#define SAMPLE_RATE_HZ 10
+#define WINDOW_SIZE 20  // 2 seconds if sampling at 10 Hz
+
+static float movement_buffer[WINDOW_SIZE];
+static int buffer_index = 0;
+static bool buffer_filled = false;
+
 
 static TaskHandle_t alarm_task_handle = NULL;
 
@@ -75,4 +89,46 @@ void startAlarmAt(int64_t timestamp_ms) {
     *ts_copy = timestamp_ms;
 
     xTaskCreate(alarm_task, "alarm_task", 2048, ts_copy, 5, &alarm_task_handle);
+}
+
+static float compute_variance(float *data, int len) {
+    float sum = 0;
+    float sum_sq = 0;
+    for (int i = 0; i < len; ++i) {
+        sum += data[i];
+        sum_sq += data[i] * data[i];
+    }
+    float mean = sum / len;
+    return (sum_sq / len) - (mean * mean);
+}
+
+void startAlarmWhenMovementInRange(double threshold_low, double threshold_high) {
+    ESP_LOGI("ALARM", "Monitoring for movement variance between %.8f and %.8f", threshold_low, threshold_high);
+
+    while (1) {
+        float x, y, z;
+        getAccelData(&x, &y, &z);
+
+        float magnitude = sqrtf(x * x + y * y + z * z);
+        movement_buffer[buffer_index++] = magnitude;
+
+        if (buffer_index >= WINDOW_SIZE) {
+            buffer_index = 0;
+            buffer_filled = true;
+        }
+
+        if (buffer_filled) {
+            double variance = compute_variance(movement_buffer, WINDOW_SIZE);
+            ESP_LOGI("ALARM", "Current movement variance: %.8f", variance);
+
+            // if (variance >= threshold_low && variance <= threshold_high) {
+            if (variance >= threshold_high) {
+                ESP_LOGI("ALARM", "Movement variance in threshold → triggering alarm!");
+                beep(2000);
+                break;
+            }
+        }
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(1000 / SAMPLE_RATE_HZ));
 }

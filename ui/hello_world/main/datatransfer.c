@@ -25,7 +25,7 @@
 static const char *TAG = "DataTransfer";
 
 // provided elsewhere
-extern bool is_alarm_set;
+// extern bool is_alarm_set;
 extern bool wifi_is_connected(void);
 
 static bool send_file_lines(int sock)
@@ -56,17 +56,19 @@ void send_wakeup_timewindow() {
 
     bool wakeuptime_sent = false;
 
-    int64_t alarm_start_ts = time_simple_to_timestamp(alarm_start);
-    int64_t alarm_end_ts = time_simple_to_timestamp(alarm_end);
-
-    char msg[64];
-    snprintf(msg, sizeof(msg), "%s,%lld,%lld", WAKE_UP_WINDOW_MARKER, alarm_start_ts, alarm_end_ts);
-
-    ESP_LOGI(TAG, "Sending wakup window of: %s - %s", ts_to_hhmmss(alarm_start_ts), ts_to_hhmmss(alarm_end_ts));
-
-
     while (!wakeuptime_sent) {
         if(is_alarm_set) {
+            int64_t alarm_start_ts = time_simple_to_timestamp(alarm_start);
+            int64_t alarm_end_ts = time_simple_to_timestamp(alarm_end);
+
+            char msg[64];
+            snprintf(msg, sizeof(msg), "%s,%lld,%lld", WAKE_UP_WINDOW_MARKER, alarm_start_ts, alarm_end_ts);
+
+            char time1[16], time2[16];
+            ts_to_hhmmss_str(alarm_start_ts, time1, sizeof(time1));
+            ts_to_hhmmss_str(alarm_end_ts,   time2, sizeof(time2));
+
+
             // prepare connection & connect
             if (!wifi_is_connected()) {
                 vTaskDelay(pdMS_TO_TICKS(500));
@@ -75,6 +77,7 @@ void send_wakeup_timewindow() {
             }
 
             ESP_LOGI(TAG, "Trying to connect to socket to send wakeup time...");
+            ESP_LOGI(TAG, "Trying to send wakup window of: %s - %s", time1 ,time2);
 
             /* ───── create socket and connect ───── */
             int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);

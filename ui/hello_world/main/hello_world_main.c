@@ -152,9 +152,18 @@ static void button_task(void *arg)
 
                 is_alarm_set = true;
 
+                ESP_LOGI(TAG, "Wakeup window set to (simpletime): %02d:%02d - %02d:%02d", alarm_start.hour, alarm_start.minute, alarm_end.hour, alarm_end.minute);
+
+                ESP_LOGI(TAG, "Wakeup window set to (ts): %lld - %lld", time_simple_to_timestamp(alarm_start), time_simple_to_timestamp(alarm_end));
+
                 int64_t alarm_start_ts = time_simple_to_timestamp(alarm_start);
                 int64_t alarm_end_ts = time_simple_to_timestamp(alarm_end);
-                ESP_LOGI(TAG, "Wakeup window set to: %s - %s", ts_to_hhmmss(alarm_start_ts), ts_to_hhmmss(alarm_end_ts));
+
+                char time1[16], time2[16];
+                ts_to_hhmmss_str(alarm_start_ts, time1, sizeof(time1));
+                ts_to_hhmmss_str(alarm_end_ts,   time2, sizeof(time2));
+
+                ESP_LOGI(TAG, "Wakeup window set to (hh:mm): %s - %s", time1, time2);
 
                 update_screen();
             } else {

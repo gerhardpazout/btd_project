@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "time_simple.h"
+#include <stddef.h>
 
 typedef enum {
     ACTION_NONE,
@@ -12,7 +13,7 @@ typedef enum {
 
 server_action_t parse_server_response(const char *json, int64_t *ts_out);
 
-const char* ts_to_hhmmss(int64_t ts_ms);
+void ts_to_hhmmss_str(int64_t ts_ms, char *out, size_t len);
 
 int64_t time_simple_to_timestamp(TimeSimple time_simple);
 

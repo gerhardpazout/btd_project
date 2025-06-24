@@ -27,15 +27,11 @@ server_action_t parse_server_response(const char *json, int64_t *ts_out) {
     return ACTION_NONE;
 }
 
-const char* ts_to_hhmmss(int64_t ts_ms) {
-    static char time_str[16];  // static buffer (safe if you only use it once at a time)
+void ts_to_hhmmss_str(int64_t ts_ms, char *out, size_t len) {
     time_t seconds = ts_ms / 1000;
-
     struct tm timeinfo;
-    localtime_r(&seconds, &timeinfo);  // Thread-safe version
-
-    strftime(time_str, sizeof(time_str), "%H:%M:%S", &timeinfo);
-    return time_str;
+    localtime_r(&seconds, &timeinfo);
+    strftime(out, len, "%H:%M:%S", &timeinfo);
 }
 
 int64_t time_simple_to_timestamp(TimeSimple time_simple) {

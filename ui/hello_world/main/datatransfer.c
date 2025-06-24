@@ -14,7 +14,7 @@
 #include "alarm.h"
 
 #define BUFFER_FILE_PATH            "/spiffs/buffer.csv"
-#define BUFFER_SEND_THRESHOLD       (1 * 1024)   // minimum size of batch before sending
+#define BUFFER_SEND_THRESHOLD       (10 * 1024)   // minimum size of batch before sending
 #define TRANSFER_CHECK_INTERVAL_MS  10000        // every 10 s
 
 #define SERVER_IP   "192.168.1.100"
@@ -59,11 +59,12 @@ void send_wakeup_timewindow() {
 
     while (!wakeuptime_sent) {
         if(is_alarm_set) {
-            // int64_t alarm_start_ts = time_simple_to_timestamp(alarm_start);
-            // int64_t alarm_end_ts = time_simple_to_timestamp(alarm_end);
+            int64_t alarm_start_ts = time_simple_to_timestamp(alarm_start);
+            int64_t alarm_end_ts = time_simple_to_timestamp(alarm_end);
             
-            int64_t alarm_start_ts = now_ms() + 30 * 1000;
-            int64_t alarm_end_ts = alarm_start_ts + 30 * 1000;
+            // hardcoded values for testing
+            // int64_t alarm_start_ts = now_ms() + 30 * 1000;
+            //int64_t alarm_end_ts = alarm_start_ts + 30 * 1000;
 
             char msg[64];
             snprintf(msg, sizeof(msg), "%s,%lld,%lld", WAKE_UP_WINDOW_MARKER, alarm_start_ts, alarm_end_ts);

@@ -274,9 +274,8 @@ void data_transfer_task(void *pv)
                         char alarm_time_str[16];
                         ts_to_hhmmss_str(ts, alarm_time_str, sizeof(alarm_time_str));
                         ESP_LOGI("SERVER", "Triggering alarm at timestamp: %lld (%s)", ts, alarm_time_str);
-
-                        beep(2000);
-                        // startAlarmAt(ts);
+                        
+                        startAlarmAt(ts);
                         break;
                     case ACTION_NONE:
                         ESP_LOGI("SERVER", "No action in server response: %s", recv_buf);

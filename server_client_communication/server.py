@@ -96,6 +96,8 @@ def handle_client(conn, addr):
     # Check if wake up window is active and trigger alarm if needed
     now_ms = int(time.time() * 1000)
     if ( wake_window["start"] and wake_window["end"] and wake_window["start"] <= now_ms <= wake_window["end"] and not wake_window["alarm_sent"] ):
+        print(f"INFO: Wakeup window entered! Window: {ts_to_hhmmss(wake_window['start'])} - {ts_to_hhmmss(wake_window['end'])}, Now: {ts_to_hhmmss(now_ms)}")
+
         alarm_timestamp = now_ms + 5000  # 5s from now for demo
 
         response = {
@@ -106,6 +108,7 @@ def handle_client(conn, addr):
         wake_window["alarm_sent"] = True
         print(f"Info: Triggering alarm at {ts_to_hhmmss(alarm_timestamp)} ({response['timestamp']})")
     else:
+        # print(f"Wakeup window NOT reached yet! Window: {ts_to_hhmmss(wake_window['start'])} - {ts_to_hhmmss(wake_window['end'])}, Now: {ts_to_hhmmss(now_ms)}")
         response = { 
             "status": "OK",
             "action": "NONE" 

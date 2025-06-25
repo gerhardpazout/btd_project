@@ -38,9 +38,8 @@
 #define TIMEZONE "CET-1CEST,M3.5.0/2,M10.5.0/3"
 
 
-
 ///////////////////////////////////////////////////
-// buttons
+// PINS
 ///////////////////////////////////////////////////
 #define BUTTON_A_GPIO   37      // orange front
 #define BUTTON_B_GPIO   39      // side (if fitted)

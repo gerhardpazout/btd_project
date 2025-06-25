@@ -7,8 +7,6 @@ extern "C" {
 
 #include <stdint.h>
 
-int64_t now_ms(void);
-
 void log_timestamp_readable(int64_t ts_ms);
 
 void print_csv_file(const char *path);

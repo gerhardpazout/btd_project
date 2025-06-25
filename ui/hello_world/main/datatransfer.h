@@ -3,9 +3,16 @@
 
 #include <stdbool.h>
 
-// Starts the data transfer FreeRTOS task (definition in data_transfer_task.c)
+/**
+ * Task responsible for data transfer between ESP and server.
+ * Also triggers alarm.
+ */
 void data_transfer_task(void *pvParameters);
 
+/**
+ * Sends the wakeup window set by user.
+ * Called in data_transfer_task()
+ */
 void send_wakeup_timewindow();
 
 #endif

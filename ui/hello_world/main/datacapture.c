@@ -46,8 +46,8 @@
 #define QMP6988_CHIP_ID     0xD1
 #define QMP6988_PRESS_MSB   0xF7
 
-void log_timestamp_readable(int64_t ts_ms)
-{
+
+void log_timestamp_readable(int64_t ts_ms) {
     time_t seconds = ts_ms / 1000;
     struct tm timeinfo;
     localtime_r(&seconds, &timeinfo);
@@ -58,6 +58,9 @@ void log_timestamp_readable(int64_t ts_ms)
     ESP_LOGI(TAG, "Timestamp: %lld ms (%s)", ts_ms, time_str);
 }
 
+/**
+ * Initializes the I2C
+ */
 static void i2c_master_init(void) {
     i2c_config_t conf = {
         .mode = SHT30_PORT,
@@ -89,6 +92,9 @@ static void i2c_master_init(void) {
     }
 }
 
+/**
+ * Reads the temperature
+ */
 static esp_err_t sht30_read_temp(float *temp_c) {
     uint8_t cmd[] = {0x2C, 0x06};  // High repeatability measurement
     uint8_t data[6];
@@ -114,6 +120,9 @@ static esp_err_t sht30_read_temp(float *temp_c) {
     return ESP_OK;
 }
 
+/**
+ * Debugging method that searches if there are any devices connected to the I2C and logs them
+ */
 void i2c_scan2() {
     ESP_LOGI("I2C", "Scanning for devices on I2C bus...");
     for (uint8_t addr = 1; addr < 127; addr++) {
@@ -131,6 +140,9 @@ void i2c_scan2() {
     ESP_LOGI("I2C", "Scan complete.");
 }
 
+/**
+ * Adds the CSV headers (columns) to a CSV file
+ */
 static void ensure_header(FILE *f) {
     fseek(f, 0, SEEK_END);
     if (ftell(f) == 0)

@@ -7,10 +7,21 @@ extern "C" {
 
 #include <stdint.h>
 
+/**
+ * Logs a given timestamp in a human readably format. 
+ * Used for debugging purposes.
+ */
 void log_timestamp_readable(int64_t ts_ms);
 
+/**
+ * Prints the contents of a CSV file.
+ * Used for debugging.
+ */
 void print_csv_file(const char *path);
 
+/**
+ * The task responsible for sampling data (accell & temp).
+ */
 void datacapture_task(void *arg);
 
 #ifdef __cplusplus

@@ -54,7 +54,7 @@ bool wifi_is_connected(void) {
     return wifi_connected;
 }
 
-// Init STA (blocking)
+// Init STA
 void wifi_init_sta(void)
 {
     // 1. NVS (required for WIFI)

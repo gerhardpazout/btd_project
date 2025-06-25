@@ -5,6 +5,10 @@ import random
 from pathlib import Path
 from datetime import datetime
 
+"""
+This file contains all the helper functions used for the server-client communication
+"""
+
 CSV_PATH = Path("values.csv")
 
 # chunker

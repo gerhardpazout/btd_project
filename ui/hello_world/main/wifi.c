@@ -18,9 +18,7 @@ static int retry_cnt = 0;
 #define WIFI_CONNECTED_BIT BIT0
 
 // Event handler
-static void wifi_event_handler(void *arg, esp_event_base_t base,
-                               int32_t id, void *event_data)
-{
+static void wifi_event_handler(void *arg, esp_event_base_t base, int32_t id, void *event_data) {
     switch (id)
     {
     case WIFI_EVENT_STA_START:
@@ -56,10 +54,10 @@ bool wifi_is_connected(void) {
     return wifi_connected;
 }
 
-// Init STA (blocking)
+// Init STA
 void wifi_init_sta(void)
 {
-    // 1. NVS (required for Wi-Fi)
+    // 1. NVS (required for WIFI)
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
         ESP_ERROR_CHECK(nvs_flash_erase());
@@ -71,7 +69,7 @@ void wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     esp_netif_create_default_wifi_sta();
 
-    // 3. Wi-Fi driver
+    // 3. WIFI driver
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
@@ -81,6 +79,7 @@ void wifi_init_sta(void)
                                                ESP_EVENT_ANY_ID,
                                                &wifi_event_handler,
                                                NULL));
+
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT,
                                                IP_EVENT_STA_GOT_IP,
                                                &wifi_event_handler,
@@ -95,7 +94,7 @@ void wifi_init_sta(void)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &sta_cfg));
 
-    // 6. Start + wait for first IP
+    // 6. Start and wait for first IP
     ESP_ERROR_CHECK(esp_wifi_start());
     ESP_LOGI(TAG, "connecting to \"%s\" …", WIFI_SSID);
 
@@ -104,5 +103,5 @@ void wifi_init_sta(void)
                         pdFALSE, pdFALSE,
                         portMAX_DELAY);
 
-    ESP_LOGI(TAG, "Wi-Fi ready");
+    ESP_LOGI(TAG, "WIFI ready");
 }

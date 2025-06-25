@@ -4,6 +4,10 @@ import numpy as np
 from pathlib import Path
 import pandas as pd
 
+"""
+This file contains all the helper functions used for calculating the thresholds that are then sent to the ESP / client
+"""
+
 def calculate_movement_magnitude(df):
     df['movement_mag'] = np.sqrt(df['x']**2 + df['y']**2 + df['z']**2)
     return df

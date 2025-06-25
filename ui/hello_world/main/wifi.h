@@ -1,4 +1,3 @@
-// wifi.h
 #include <stdbool.h>
 
 #ifndef WIFI_H

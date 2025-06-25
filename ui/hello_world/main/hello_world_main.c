@@ -38,9 +38,8 @@
 #define TIMEZONE "CET-1CEST,M3.5.0/2,M10.5.0/3"
 
 
-
 ///////////////////////////////////////////////////
-// buttons
+// PINS
 ///////////////////////////////////////////////////
 #define BUTTON_A_GPIO   37      // orange front
 #define BUTTON_B_GPIO   39      // side (if fitted)
@@ -59,16 +58,22 @@ TimeSimple alarm_start   = { .hour = 0, .minute = 0 };
 TimeSimple alarm_end     = { .hour = 0, .minute = 0 };
 bool is_alarm_set = false;
 
-void initialize_sntp(void)
-{
+/**
+ * Initializes SNTP to fetch current time from a website that provides the current time 
+ * Further info see: https://esp32.com/viewtopic.php?t=8809
+ */
+void initialize_sntp(void) {
     ESP_LOGI("SNTP", "Initializing SNTP...");
     sntp_setoperatingmode(SNTP_OPMODE_POLL);
     sntp_setservername(0, "pool.ntp.org");
     sntp_init();
 }
 
-void wait_for_time_sync(void)
-{
+/**
+ * Waits to synchronize ESP's system time with real world time
+ * Further info see: https://esp32.com/viewtopic.php?t=8809
+ */
+void wait_for_time_sync(void) {
     time_t now = 0;
     struct tm timeinfo = { 0 };
     int retries = 0;
@@ -82,6 +87,10 @@ void wait_for_time_sync(void)
     }
 }
 
+/**
+ * Increases the wakeup window hour or minute
+ * Indizes: 0 = hour of window start, 1 = minute of window start, 2 = hour of window end, 3 = minute of window end
+ */
 void increase_alarm(uint8_t index) {
     switch (index) {
         case 1:
@@ -102,6 +111,10 @@ void increase_alarm(uint8_t index) {
     update_screen();
 }
 
+/**
+ * Increases the wakeup window index (meaning of hour or minute is selected)
+ * Indizes: 0 = hour of window start, 1 = minute of window start, 2 = hour of window end, 3 = minute of window end
+ */
 void increase_alarm_index() {
     alarm_index = (alarm_index + 1) % 4;
 
@@ -117,8 +130,7 @@ void increase_alarm_index() {
 /**
  * Called by timer for single press detection
  */
-static void single_press_cb(TimerHandle_t xTimer)
-{
+static void single_press_cb(TimerHandle_t xTimer) {
     waiting_second = false;
     ESP_LOGI(TAG, "Button A SINGLE press");
     increase_alarm_index();
@@ -127,9 +139,8 @@ static void single_press_cb(TimerHandle_t xTimer)
 /**
  * ISR handler for buttons
  */
-static void IRAM_ATTR button_isr_handler(void *arg)
-{
-    button_pressed = (int) arg;               // which pin
+static void IRAM_ATTR button_isr_handler(void *arg) {
+    button_pressed = (int) arg; // pin
     xTaskNotifyFromISR(button_task_handle, 0, eNoAction, NULL);
 }
 

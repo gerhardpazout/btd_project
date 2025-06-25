@@ -15,7 +15,7 @@
 
 #define BUFFER_FILE_PATH            "/spiffs/buffer.csv"
 #define BUFFER_SEND_THRESHOLD       (10 * 1024)   // minimum size of batch before sending
-#define TRANSFER_CHECK_INTERVAL_MS  10000        // every 10 s
+#define TRANSFER_CHECK_INTERVAL_MS  10000         // every 10 s
 
 #define SERVER_IP   "192.168.1.100"
 #define SERVER_PORT 3333
@@ -25,7 +25,6 @@
 
 static const char *TAG = "DataTransfer";
 
-// provided elsewhere
 // extern bool is_alarm_set;
 extern bool wifi_is_connected(void);
 
@@ -64,7 +63,7 @@ void send_wakeup_timewindow() {
             
             // hardcoded values for testing
             // int64_t alarm_start_ts = now_ms() + 30 * 1000;
-            //int64_t alarm_end_ts = alarm_start_ts + 30 * 1000;
+            // int64_t alarm_end_ts = alarm_start_ts + 30 * 1000;
 
             char msg[64];
             snprintf(msg, sizeof(msg), "%s,%lld,%lld", WAKE_UP_WINDOW_MARKER, alarm_start_ts, alarm_end_ts);
@@ -74,7 +73,7 @@ void send_wakeup_timewindow() {
             ts_to_hhmmss_str(alarm_end_ts,   time2, sizeof(time2));
 
 
-            // prepare connection & connect
+            // Ensure WIFI conneciton
             if (!wifi_is_connected()) {
                 vTaskDelay(pdMS_TO_TICKS(500));
                 ESP_LOGI(TAG, "Wifi connection is set!");
@@ -84,7 +83,7 @@ void send_wakeup_timewindow() {
             ESP_LOGI(TAG, "Trying to connect to socket to send wakeup time...");
             ESP_LOGI(TAG, "Trying to send wakup window of: %s - %s", time1 ,time2);
 
-            /* ───── create socket and connect ───── */
+            // Get server socket & connect
             int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
             if (sock < 0) {
                 ESP_LOGE(TAG, "socket() failed");
@@ -114,26 +113,6 @@ void send_wakeup_timewindow() {
                 char recv_buf[256] = {0};
                 int len = recv(sock, recv_buf, sizeof(recv_buf) - 1, 0);
                 if (len > 0) {
-                    /*
-                    recv_buf[len] = '\0';
-                    int64_t ts = 0;
-                    server_action_t action = parse_server_response(recv_buf, &ts);
-
-                    switch (action) {
-                        case ACTION_TRIGGER_ALARM:
-                            ESP_LOGI("SERVER", "Triggering alarm at timestamp: %lld", ts);
-                            // startAlarmAt(ts);
-                            break;
-                        case ACTION_NONE:
-                            ESP_LOGI("SERVER", "No action in server response: %s", recv_buf);
-                            break;
-                        case ACTION_UNKNOWN:
-                        default:
-                            ESP_LOGW("SERVER", "Unknown action or malformed response: %s", recv_buf);
-                            break;
-                    }
-                    */
-
                     wakeuptime_sent = true;
                 } else {
                     ESP_LOGW(TAG, "No response from server after sending wake window.");
@@ -141,28 +120,6 @@ void send_wakeup_timewindow() {
             } else {
                 ESP_LOGW(TAG, "Sending wakeup window failed!");
             }
-            
-
-            ////////////////////////
-            /*
-            bool ok = true;
-            // send start marker
-            ok = send(sock, msg, strlen(msg), 0) >= 0;
-            // send file line-by-line
-
-            shutdown(sock, 0);
-            close(sock);
-
-            // server ack (optional) ignored here
-
-            if (ok) {
-                ESP_LOGI(TAG, "wakeup window sent!");
-                wakeuptime_sent = true;
-                
-            } else {
-                ESP_LOGW(TAG, "sending wakeup window failed!");
-            }
-            */
 
             shutdown(sock, 0);
             close(sock);
@@ -187,25 +144,26 @@ void data_transfer_task(void *pv)
 
     bool movement_thresholds_set = false;
 
-    // send data "endlessly"
+    // Send data "endlessly"
     while (!movement_thresholds_set) {
-        /* wait until user has set the alarm */
+        
+        // Wait until user has set the alarm
         if (!is_alarm_set) {
             vTaskDelay(pdMS_TO_TICKS(1000));
             ESP_LOGI(TAG, "Alarm is set!");
             continue;
         }
 
-        /* only proceed if Wi-Fi is up and buffer file exists */
+        // Only proceed if Wi-Fi is up and buffer file exists
         if (!wifi_is_connected()) {
             vTaskDelay(pdMS_TO_TICKS(2000));
             ESP_LOGI(TAG, "Wifi connection is set!");
             continue;
         }
 
+        // Ensure buffer file exists
         struct stat st;
         if (stat(BUFFER_FILE_PATH, &st) != 0) {
-            /* file doesn’t exist yet → nothing to send */
             vTaskDelay(pdMS_TO_TICKS(2000));
             ESP_LOGI(TAG, "Buffer.csv exists!");
             continue;
@@ -221,7 +179,7 @@ void data_transfer_task(void *pv)
 
         ESP_LOGI(TAG, "Trying to connect to socket...");
 
-        /* ───── create socket and connect ───── */
+        // Get server socket & connect
         int sock = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
         if (sock < 0) {
             ESP_LOGE(TAG, "socket() failed");
@@ -245,18 +203,21 @@ void data_transfer_task(void *pv)
 
         ESP_LOGI(TAG, "connected – sending batch (%d bytes)", (int)sz);
 
-        
+        // ok &= function() means "only keep the variable true if the function succeeds"
         bool ok = true;
-        // send start marker
+
+        // Send start marker
         ok &= send(sock, START_MARKER, strlen(START_MARKER), 0) >= 0;
-        //send file line-by-line
+
+        // Send file line-by-line
         ok &= send_file_lines(sock);
-        //send end marker
+        
+        // Send end marker
         if (ok)
             ok &= send(sock, END_MARKER, strlen(END_MARKER), 0) >= 0;
 
 
-        // server ack (optional) ignored here
+        // If everything was sent successfully, process server answer
         if (ok) {
             ESP_LOGI(TAG, "batch sent – truncating buffer");
             FILE *fclear = fopen(BUFFER_FILE_PATH, "w");

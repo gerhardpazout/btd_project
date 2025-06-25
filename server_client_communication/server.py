@@ -34,6 +34,7 @@ wake_window = {
     "alarm_sent": False
 }
 
+# Function for handling the communication between the server and the client. Adapted from exercise 2
 def handle_client(conn, addr):
     print(f"Info: {addr} connected")
     buffer, msg, receiving = "", "", False
@@ -76,7 +77,7 @@ def handle_client(conn, addr):
             msg += buffer
             buffer = ""
 
-    # -------- save one CSV per upload -----------------------------
+    # save one CSV per upload
     rows = []
     for line in msg.strip().splitlines():
         parts = [p.strip() for p in line.split(",")]
@@ -138,7 +139,7 @@ def main():
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind((HOST, PORT))
     srv.listen()
-    srv.settimeout(2.0)  # ✨ important: make accept() non-blocking
+    srv.settimeout(2.0)  # make accept() non-blocking
     print(f"Listening on {HOST}:{PORT}")
 
     try:
@@ -147,11 +148,13 @@ def main():
                 conn, addr = srv.accept()
                 handle_client(conn, addr)
             except socket.timeout:
-                continue  # no client → check for Ctrl+C again
+                continue  # no client => check for Ctrl+C again (this way the server can be shut down without having to close the CMD window)
     except KeyboardInterrupt:
         print("\nServer stopped by user")
     finally:
         srv.close()
 
+# if the file is run directly => call main()
+# irrelevant now, but at time of coding this distinction might have made sense 
 if __name__ == "__main__":
     main()

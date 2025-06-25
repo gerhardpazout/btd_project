@@ -2,6 +2,10 @@ import socket
 import time
 from helpers import generate_mock_data, generate_wakeup_window, send_data_to_server
 
+"""
+This file is just a way of simulating the ESP, so we can develop and quality control the server.py faster
+"""
+
 # Constants
 SERVER_IP = "192.168.1.100"
 PORT = 3333

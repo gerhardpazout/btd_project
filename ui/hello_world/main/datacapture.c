@@ -24,11 +24,9 @@
 #define SAMPLE_RATE_HZ 30
 #define TAG "DATACAPTURE"
 
-
-// constants for temperature sensor:
-/**************** I2C CONFIG ****************/
-//#define I2C_MASTER_SCL_IO 26
-// #define I2C_MASTER_SDA_IO 0
+////////////////////////////////////////////
+// Constants for I2C and temeprature module
+////////////////////////////////////////////
 #define I2C_MASTER_NUM I2C_NUM_0
 #define I2C_MASTER_FREQ_HZ 100000
 #define I2C_MASTER_TX_BUF_DISABLE 0
@@ -44,8 +42,12 @@
 
 #define SHT30_ADDR 0x44
 
-void log_timestamp_readable(int64_t ts_ms)
-{
+#define QMP_ADDR 0x70
+#define QMP6988_CHIP_ID     0xD1
+#define QMP6988_PRESS_MSB   0xF7
+
+
+void log_timestamp_readable(int64_t ts_ms) {
     time_t seconds = ts_ms / 1000;
     struct tm timeinfo;
     localtime_r(&seconds, &timeinfo);
@@ -56,6 +58,9 @@ void log_timestamp_readable(int64_t ts_ms)
     ESP_LOGI(TAG, "Timestamp: %lld ms (%s)", ts_ms, time_str);
 }
 
+/**
+ * Initializes the I2C
+ */
 static void i2c_master_init(void) {
     i2c_config_t conf = {
         .mode = SHT30_PORT,
@@ -87,43 +92,9 @@ static void i2c_master_init(void) {
     }
 }
 
-static esp_err_t i2c_write(uint8_t addr, const uint8_t *data, size_t len)
-{
-    return i2c_master_write_to_device(SHT30_PORT, addr, data, len, pdMS_TO_TICKS(100));
-}
-static esp_err_t i2c_read(uint8_t addr, uint8_t *data, size_t len)
-{
-    return i2c_master_read_from_device(SHT30_PORT, addr, data, len, pdMS_TO_TICKS(100));
-}
-
-/**************** SHT30 (Temp+RH) ****************/
-static esp_err_t sht30_sample_raw(uint16_t *raw_t, uint16_t *raw_rh)
-{
-    /* Single‑shot high‑repeatability command */
-    uint8_t cmd[2] = {0x2C, 0x06};
-    esp_err_t err = i2c_write(SHT30_ADDR, cmd, 2);
-    if (err != ESP_OK) {
-        ESP_LOGE("SHT30", "I2C write failed: %s (%d)", esp_err_to_name(err), err);
-        return err;
-    }
-    vTaskDelay(pdMS_TO_TICKS(15));
-    uint8_t rx[6];
-    ESP_ERROR_CHECK(i2c_read(SHT30_ADDR, rx, 6));
-    *raw_t  = (rx[0] << 8) | rx[1];
-    *raw_rh = (rx[3] << 8) | rx[4];
-    return ESP_OK;
-}
-static void sht30_get(float *temp_c, float *rh)
-{
-    uint16_t rt, rrh;
-    if (sht30_sample_raw(&rt, &rrh) == ESP_OK) {
-        *temp_c = -45.0f + 175.0f * ((float)rt / 65535.0f);
-        *rh     = 100.0f * ((float)rrh / 65535.0f);
-    } else {
-        *temp_c = NAN; *rh = NAN;
-    }
-}
-
+/**
+ * Reads the temperature
+ */
 static esp_err_t sht30_read_temp(float *temp_c) {
     uint8_t cmd[] = {0x2C, 0x06};  // High repeatability measurement
     uint8_t data[6];
@@ -149,24 +120,9 @@ static esp_err_t sht30_read_temp(float *temp_c) {
     return ESP_OK;
 }
 
-/**************** QMP6988 (Pressure) ****************/
-#define QMP_ADDR 0x70
-/* Register addresses */
-#define QMP6988_CHIP_ID     0xD1
-#define QMP6988_PRESS_MSB   0xF7
-/* The full compensation routine needs calibration registers;   
- * for brevity, we perform a quick uncompensated read and return raw pressure in Pa.
- * For accurate results, port the full driver from QST.
+/**
+ * Debugging method that searches if there are any devices connected to the I2C and logs them
  */
-static int32_t qmp6988_read_raw_press(void)
-{
-    uint8_t buf[3];
-    if (i2c_read(QMP_ADDR, buf, 3) == ESP_OK) {
-        return (int32_t)((buf[0] << 16) | (buf[1] << 8) | buf[2]);
-    }
-    return -1;
-}
-
 void i2c_scan2() {
     ESP_LOGI("I2C", "Scanning for devices on I2C bus...");
     for (uint8_t addr = 1; addr < 127; addr++) {
@@ -184,6 +140,9 @@ void i2c_scan2() {
     ESP_LOGI("I2C", "Scan complete.");
 }
 
+/**
+ * Adds the CSV headers (columns) to a CSV file
+ */
 static void ensure_header(FILE *f) {
     fseek(f, 0, SEEK_END);
     if (ftell(f) == 0)
